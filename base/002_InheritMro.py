@@ -43,8 +43,10 @@ class I(G,H):
 	def test(self):
 		print('from I')
 
+# 使用方法一
 print(I.__mro__)
-
+# 使用方法二
+print()
 
 
 # I>G>D>B>H>F>C>A
