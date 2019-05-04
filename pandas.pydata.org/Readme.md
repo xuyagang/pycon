@@ -1,1 +1,0 @@
-http://pandas.pydata.org/pandas-docs/stable/user_guide/visualization.html#basic-plotting-plot
