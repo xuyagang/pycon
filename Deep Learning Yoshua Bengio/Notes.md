@@ -24,5 +24,69 @@
     - 两个矩阵形状一样，可以进行相加(对应位置元素相加)
         - 向量加矩阵会广播
 ## 2.2 矩阵向量相乘
-- 矩阵A和矩阵B相乘，矩阵A的列数必须和矩阵B的行数相等
-- 
+- 矩阵A和矩阵B相乘，矩阵A的列数必须和矩阵B的==行数相等==
+  - ___A___的形状是m*n,___B___的形状是n\*p，结果___C___等于m\*p
+
+- 两个矩阵的标准积不是对应元素的乘积
+
+- 连个矩阵对应元素的乘积是__元素对应乘积__（Hadamard product）
+
+  ![001](D:\project\pycon\Deep Learning Yoshua Bengio\img\001.JPG)
+
+- 两个维数相同的向量__x__和__y__的点积（dot product）可看作是矩阵__x__<sup>T</sup>__y__
+
+  - 两个向量a = [a1, a2,…, an]和b = [b1, b2,…, bn]的点积定义为：
+
+    __a·b=a1b1+a2b2+……+anbn__
+
+- 矩阵乘积服从分配律、集合律
+
+  - 矩阵加法就是相同位置的数字加一下,矩阵减法也类似
+
+  - 矩阵乘以一个常数，就是所有位置都乘以这个数
+
+  - 矩阵乘法
+
+    - [参考](https://nolaymanleftbehind.wordpress.com/2011/07/10/linear-algebra-what-matrices-actually-are/)，[参考](https://www.cnblogs.com/alantu2018/p/8528299.html)
+    - 结果矩阵第m行与第n列交叉位置的那个值，等于第一个矩阵第m行与第二个矩阵第n列，对应位置的每个值的乘积之和
+
+    ![002](D:\project\pycon\Deep Learning Yoshua Bengio\img\002.jpg)
+
+    - **矩阵的本质就是线性方程式，两者是一一对应关系**
+
+      - 线性方程式
+
+        ![003](D:\project\pycon\Deep Learning Yoshua Bengio\img\003.jpg)
+
+      - 矩阵的最初目的，只是为线性方程组提供一个简写形式
+
+        ![004](D:\project\pycon\Deep Learning Yoshua Bengio\img\004.jpg)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
