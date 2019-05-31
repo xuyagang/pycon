@@ -179,15 +179,53 @@
   - 花式索引跟切片不一样，总是将数据复制到新的数组
 
 - 数组转置和轴对换
-  - pg107
 
+  - 转置返回的是源数据的视图（不会进行任何操作）
 
+  - 不仅用transpose方法，还有特殊的T属性
 
+    - ```python
+      arr = np.arange(15).reshape((3,5))
+      arr.T
+      >>>array([[ 0,  5, 10],
+             [ 1,  6, 11],
+             [ 2,  7, 12],
+             [ 3,  8, 13],
+             [ 4,  9, 14]])
+      ```
 
+    - np.dot计算矩阵内积  X<sup>T</sup>X
 
+      ```
+      np.dot(arr,arr.T)
+      ```
 
+  - 对于高维的数组，transpose需要一个由轴编号组成的元祖进行转置
 
+    ```
+    arr = np.arange(16).reshape((2,2,4))
+    arr.transpose((1,0,2))
+    ```
 
+  - ndarray还有一个swapaxes的方法，需要接受一对轴编号
+
+    __返回源数据的视图__
+
+    ```
+    arr.swapaxes(1,2)
+    ```
+
+- 通用函数
+
+  - 一元ufunc
+
+    ![004](D:\project\pycon\DA\img\004.JPG)
+
+    ![005](D:\project\pycon\DA\img\005.JPG)
+
+  - 二元ufunc
+
+    ![006](D:\project\pycon\DA\img\006.JPG)
 
 
 
