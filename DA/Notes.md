@@ -227,13 +227,195 @@
 
     ![006](D:\project\pycon\DA\img\006.JPG)
 
+- 利用数组进行数据处理
 
+  - numpy可以使你将许多种数据处理任务表述为简洁的表达式
 
+  - 用数组表达式代替循环的做法，通常被称为矢量化
 
+  - 广播是针对矢量化计算的强大手段
 
+    - numpy.meshgrid函数接受两个一维数组，并产生两个二维矩阵
 
+      ```
+      points = np.arange(0,5)
+      xs,ys= np.meshgrid(points,points)
+      print(xs)
+      print(ys)
+      >>>
+      [[0 1 2 3 4]
+       [0 1 2 3 4]
+       [0 1 2 3 4]
+       [0 1 2 3 4]
+       [0 1 2 3 4]]
+      [[0 0 0 0 0]
+       [1 1 1 1 1]
+       [2 2 2 2 2]
+       [3 3 3 3 3]
+       [4 4 4 4 4]]
+      ```
 
+- 将条件逻辑表述为数组运算
 
+  ```python
+  xarr = np.array([1.2,1.3,1.4,1.5])
+  yarr = np.array([2.1,2.2,2.3,2.4,2.5])
+  cond = np.array([True,False,True,True,False])
+  
+  result = [x if c else y
+           for x,y,c in zip(xarr,yarr,cond)]
+  result
+  >>>[1.2, 2.2, 1.4, 1.5]
+  ```
+
+  - 以上做法的缺点：
+
+    - 速度不快，因为是工作是纯python完成
+    - 无法用于多维数组
+
+  - numpy.where函数是三元表达式__x if condition else y__的是矢量化版本
+
+    - 简洁操作
+
+      ```
+      numpy.where(cond,xarr,yarr)
+      ```
+
+      - numpy.where（）的第二三个参数不必是数组，可以是标量
+
+      - 通常用于根据一个数组产生一个新的数组
+
+        ```
+        arr = np.random.randn(4,4)
+        np.where(arr>0,2,-2)
+        >>>array([[ 2, -2, -2, -2],
+               [-2, -2,  2,  2],
+               [ 2, -2, -2, -2],
+               [-2, -2,  2,  2]])
+        ```
+
+      - for循环改写嵌套where表达式
+
+        ```python
+        result = []
+        for i in range(n):
+            if cond1[i] and cond2[i]:
+                result.append(0)
+            if cond1[i]:
+                resuslt.append(1)
+            if cond2[2]:
+                result.append(2)
+            else:
+                result.append(3)
+                
+        # 等价于
+        np.where(cond1 & cond2,0,
+                np.where(cond1,1,
+                        np.where(cond2,2,3)))
+        ```
+
+- 数学和统计方法
+
+  - sum 对数组全部或某轴的元素求和，零长度的数组sum=0
+
+  - mean 算术平均数,零长度的数组mans=NaN
+
+  - std、var 标准差和方差，自由度可调（默认为n）
+
+  - min、max 最大最小值
+
+  - argmin、argmax 分别为==最大最小元素的索引==
+
+  - cumsum 所有元素的累计和
+
+    ```python
+    [-1 -1 -1 -1 -1 -1  1 -1  1 -1]
+    # cumsum的结果：
+    [-1 -2 -3 -4 -5 -6 -5 -6 -5 -6]
+    ```
+
+    
+
+  - cumprod 所有蒜素的累计积
+
+- 布尔型数组方法
+
+  - 数学和统计计算会将布尔值转换为 1（Ture) 和 0 （false）
+  - any 和all对布尔型数组非常有用
+
+- 排序
+
+  - numpy数组也可以通过sort方法排序
+  - 多维数组可以在任何一个轴向上进行排序，只需要将轴号传给sort
+
+- 唯一化以及其他集合逻辑
+
+  - unique(x)   计算x中的唯一元素，并返回有序结果
+  - intersect1d(x,y)   计算x和y中的公共元素，并返回有序结果
+  - union1d(x,y)   计算x,y的并集，并返回有序结果
+  - in1d(x,y)   得到一个’x的元素是否包含与y‘ 的布尔型数组
+  - setdiff1d(x,y)   集合的差，即元素在x中且不再y中
+  - setxor1d(x,y)   集合的对称差，即存在与一个数组中，但不同时存在与两个数组中的元素
+
+- 将二进制数组保存到磁盘
+
+  - np.save()
+
+  - np.load()
+
+    > 默认情况下,数组是以未压缩的原始二进制格式保存在.npy文件中
+
+    ```
+    arr = np.arange(10)
+    np.save('test',arr)
+    np.load('test.npy')
+    ```
+
+  - np.savez可以将多个数组保存到一个压缩文件中，将数组以关键字参数传入即可
+
+    ```python
+    arr = np.arange(10)
+    np.savez('test',a = arr, b = arr)
+    np.load('test.npz')['a']
+    ```
+
+- 存取文本文件
+
+  - np.loadtxt('test.txt',delimiter=',')
+  - np.genfromtxt()   和loadtxt差不多，面向的是结构化数组和缺失数据处理
+  - np.savetxt()    将数组以某个分隔符写入文本中
+
+### 线性代数
+
+线性代数（如矩阵乘法，矩阵分解，行列式以及其他）是任何数组库的组成部分
+
+- diag   以一维数组的形式返回方阵的对角线或非对角线元素，或将一维数组转换为方阵（非对角线元素为0）
+- dot   矩阵乘法
+- trace   计算对角线元素的和
+- det   计算矩阵行列式
+- eig   计算方阵的本征值和本征向量
+- inv   计算方针的逆
+- pinv   计算矩阵的moore-penrose伪逆
+- qr   计算QR分解
+- svd   计算奇异值分解
+- solve   解线性方程Ax  = b ,其中A为一个方阵
+- lstsq   计算Ax = b的最小二乘解
+
+### 随机数生成
+
+- seed   确定随机数生成的种子
+- permutation   返回一个序列的随机排列或返回一个随机排列的范围
+- shuffle    对一个序列随机的排序
+- rand   产生均匀分布的样本
+- randint   从给定的范围内随机选区整数
+- randn   产生正态分布(平均值0，标准差为1)的样本
+- binomial   产生二项分布的样本值
+- beta   产生beta分布的样本值
+- chisquare 产生卡方分布的样本值
+- gamma   产生gamma分布的样本值
+- uniform   产生在[0,1]中均匀分布的样本值
+
+pg123
 
 
 
