@@ -407,7 +407,7 @@
 - permutation   返回一个序列的随机排列或返回一个随机排列的范围
 - shuffle    对一个序列随机的排序
 - rand   产生均匀分布的样本
-- randint   从给定的范围内随机选区整数
+- randint   从给定的范围内随机选区整数   randint(low, high=None, size=None, dtype='l')
 - randn   产生正态分布(平均值0，标准差为1)的样本
 - binomial   产生二项分布的样本值
 - beta   产生beta分布的样本值
@@ -415,7 +415,9 @@
 - gamma   产生gamma分布的样本值
 - uniform   产生在[0,1]中均匀分布的样本值
 
-pg123
+
+
+## 第五章   pandas 入门
 
 
 
