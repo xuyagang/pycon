@@ -6,8 +6,10 @@
 
 - URI的全称为 Uniform Resource Identifier，即统一资源标志符
 - URL 的全称为 Universal Resource Locator，即统一资源定位符
+
   - 通过一个链接，我们便可以从互联网上 找到这个资源，这就是 URL/URI
--  URN全称为 Universal Resource Name，即统一资 源名称
+- URN全称为 Universal Resource Name，即统一资 源名称
+
   - 以唯一标识这本书，但是没有指定到哪里定位这本书，这就是 URN
 - URN 用得非常少，所以几乎所有的 URI 都是 URL
 
@@ -286,6 +288,42 @@
   - 网上免费
   - 付费服务
   - ADSL拨号
+
+## 第三章   基本库的使用
+
+### 3.1 urllib
+
+Python 2 中，有 urllib 和 urllib2 两个库来实现请求的发送。 而在 Python 3 中，已经不存在 urllib2 这个库了 ， 统一为 urllib
+
+- urllib 库，它是 Python 内置的 HTTP请求库,包含如下 4个模块
+  - request ： 它是最基本的 HTTP 请求模块，可以用来模拟发送请求。 就像在浏览器里输入网挝 然后回车一样，只需要给库方法传入 URL 以及额外的参数，就可以模拟实现这个过程了。 
+  - error： 异常处理模块，如果出现请求错误， 我们可以捕获这些异常，然后进行重试或其他操 作以保证程序不会意外终止。
+  - parse： 一个工具模块，提供了许多 URL 处理方法，比如拆分、解析、 合并等
+  - robotparser：主要是用来识别网站的 robots.txt 文件，然后判断哪些网站可以爬，哪些网站不 可以爬，它其实用得比较少
+
+- 发送请求
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

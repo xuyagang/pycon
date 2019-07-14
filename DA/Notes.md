@@ -419,9 +419,342 @@
 
 ## 第五章   pandas 入门
 
+pandas是基于numpy构建的，让以numpy为中心的应用变得简单
 
+- Series和DATa Frame用的次数比较多，所以将其引入本地命名空间
 
+`from pandas import Series,DataFrame`
 
+`import pandas as pd`
+
+### Series
+
+- 类似与一维数组的对象，由一组数据以及一组与之相关的数据标签组成
+
+- 会自动创建0到N-1的整数索引（N为数据长度）
+
+- 如果传入的data和index都是list,则元素个数必须对应，如果传入的data是字典格式，则index可随意，结果的个数和传入的index有关系,此时使用NA表示缺失数据，自动对齐不同索引数据
+
+  ```python
+  sdata = {'ohio':35000,'texas':7100,'oregon':16000,'utah':5000}
+  states={'california','texas','haha','hello','wuwu'}
+  obj = pd.Series(sdata,index=states)
+  obj
+  >>>haha             NaN
+  california       NaN
+  hello            NaN
+  wuwu             NaN
+  texas         7100.0
+  dtype: float64
+  ```
+
+- 使用NA表示缺失数据
+
+  - isnull 和 notnull 用于检测缺失数据
+
+- 通过Series的values 和 index 属性获取数组和索引
+
+  ```python
+  obj = Series([4,7,-5,3])
+  obj.values
+  >>>array([ 4,  7, -5,  3], dtype=int64)
+  obj.index
+  >>>RangeIndex(start=0, stop=4, step=1)
+  ```
+
+- 也可以传入数组对象作为索引
+
+  ```python
+  obj = Series([1,2,3,4],index=['a','b','c','d'])
+  ```
+
+- 可以通过字典创建Series
+
+  `Series(dict_data)`
+
+- Series的算术运算会自动对齐不同索引的数据
+
+- Series和其索引都有一个name属性
+
+  ```
+  obj = Series([4,7,-5,3])
+  obj.name = 'test'
+  obj.index.name = 'haha'
+  obj
+  >>>haha
+      0    4
+      1    7
+      2   -5
+      3    3
+      Name: test, dtype: int64
+  ```
+
+- Series 的索引可以通过赋值的方式就地修改，长度必须匹配
+
+### DataFrame
+
+DataFrame是一个表格型的数据结构，有一组有序的列，每列有不同的值类型，既有行索引也有列索引，可以看作是Series组成的字典
+
+- 构建方法（data,columns,index）
+
+  >构建方法有很多，最常用的是传入一个等长的列表或Numpy数组组成的字典
+
+  ```python
+  data = {'state':['a','b','c','d','d'],
+         'year':[2011,2002,2001,2011,2003],
+         'pop':[1.5,1.7,6.3,2.9,2.4]}
+  frame = DataFrame(data)
+  >>>  state  year  pop
+  0     a  2011  1.5
+  1     b  2002  1.7
+  2     c  2001  6.3
+  3     d  2011  2.9
+  4     d  2003  2.4
+  ```
+
+  - DataFrame 会自动加上索引，并有序排列
+
+  - 如果指定了列顺序，DataFrame会按顺序排列
+
+  - 数据找不到会产生NA值
+
+  - 可以通过列名获取列，通过==ix==获取==行==
+
+  - 列可以通过赋值的方式修改，赋值的长度必须和原列长度匹配
+
+  - 如果赋值的是series,则会精确匹配索引，空位填上缺失值
+
+  - 为不存在的列赋值会创建新列，关键字==dell== 用于删除 ==列==
+
+    `del frame1['列名']`
+
+    > 通过索引方式返回的列是相应数据的视图（非副本），对返回的series做的修改会反应到源DataFrame上
+    >
+    > - 通过series 的copy方法可以显式的复制列
+
+  - 把嵌套字典传给DATa Frame，外层的键会被作为列，内层键会被做为行索引，当然也可以对结果进行转置
+
+    ```python
+    pop = {'a':{'A':1,'B':2},
+          'b':{'C':3},'D':5}
+    df = pd.DataFrame(pop)
+    print(df)
+    print(df.T)
+    
+    >>>  a    b  D
+    A  1.0  NaN  5
+    B  2.0  NaN  5
+    C  NaN  3.0  5
+    
+         A    B    C
+    a  1.0  2.0  NaN
+    b  NaN  NaN  3.0
+    D  5.0  5.0  5.0
+    ```
+
+  - 可输入DataFrame的数据
+
+    - 二维ndarray
+    - 数组、列表或元组组成的字典
+    - numyp的结构化数组（类似由数组组成的字典）
+    - 由series组成的字典
+    - 字典组成的字典
+    - 字典或series的列表
+    - 列表或元组的列表
+    - 另外的DataFrame
+    - numpy的maskedarray
+
+  - 设置index和columns的名字
+
+    ```python
+    frame1.index.name = 'year'
+    frame1.columns.name = 'state'
+    df
+    >>>AAA    a    b
+    aaa          
+    A    1.0  NaN
+    B    2.0  NaN
+    C    NaN  3.0
+    D    NaN  5.0
+    ```
+
+  - 获取values值
+
+    `frame1.values`
+
+- 索引对象
+
+  > 索引对象负责管理轴标签和轴名称等
+
+  - index对象是不可修改的（immutable），这样才能保证index对象在多个数据结构之间安全共享
+
+  - index对象
+    - index                           将轴标签表示为一个python对象组成的Numpy数组
+    - int64Index                  针对整数的特殊index
+    - MultiIndex                  层次化索引对象
+    - DatetiemIndex           存储纳秒级时间戳
+    - PeriodIndex                时间间隔
+  - index的方法和属性
+    - append                        连接另一个index对象
+    - diff                                计算差集
+    - intersection                 计算交集
+    - union                            计算并集
+    - isin                                计算一个指示各值是否都包含在参数集合中的布尔型数组
+    - delete                           删除索引 i 处的元素，得到新的index
+    - drop                              删除传入的值，得到新的index
+    - insert                            将元素插入到索引  i  处
+    - is_monotonic(单调的)               当各元素均大于前一个元素时，返回True 
+    - is_unique                      当index没有重复时，返回true
+    - unique                           计算index中的唯一值数组
+
+- 基本功能
+
+  - 重新索引
+
+    > pandas对象的一个重要方法是reindex,其作用是创建一个适应新索引的对象
+
+    ```python
+    obj = pd.Series([4.5,7.2,-5.3,3.6],index=['d','b','a','c'])
+    obj
+    >>>d    4.5
+    b    7.2
+    a   -5.3
+    c    3.6
+    dtype: float64
+    
+    # reindex 会根据索引重排，当索引值不在时引入缺失值
+    obj2 = obj.reindex(['a','b','c','d','e'])
+    obj2
+    >>>a   -5.3
+    b    7.2
+    c    3.6
+    d    4.5
+    e    NaN
+    dtype: float64
+    # 给缺失值赋值
+    obj.reindex(['a','b','c','d','e'],fill_value=0)
+    >>>a   -5.3
+    b    7.2
+    c    3.6
+    d    4.5
+    e    0.0
+    dtype: float64
+    ```
+
+  - 插值处理 method
+
+    - ffill 或 pad                             向前填充值
+
+    - bfill 或 backfill                      向后填充值
+
+      ```
+      obj3 = pd.Series(['blue','yellow','red'],index=[0,2,3])
+      print(obj3)
+      print(obj3.reindex(range(6),method='ffill'))
+      >>>0      blue
+      2    yellow
+      3       red
+      dtype: object
+      0      blue
+      1      blue
+      2    yellow
+      3       red
+      4       red
+      5       red
+      dtype: object
+      ```
+
+    - 对于DataFrame，reindex 可修改行和列索引，如果传入一个 序列，则会重新索引行
+
+      - 使用columns参数可重新索引列
+
+      - 可同时对行列进行索引，而插值只能按行应用
+
+        ```
+        frame.reindex(index=['a','b','c','d'],columns=states).ffill()
+        ```
+
+      - 利用ix的标签索引功能
+
+        ```
+        frame.ix[['a','b','c','d'],states]
+        ```
+
+      - reindex的参数
+
+        - index :索引新序列
+        - method：插值方式 
+        - fill_value:重新索引过程中引入缺失值时使用的替代值
+        - limit:向前向后填充时的最大填充量
+        - level:在multiindex的指定级别上匹配简单索引，否则选区其子集
+        - copy:默认true,无论如何都复制
+
+    - 对齐指定轴的项——drop()
+
+      ```python
+      obj = pd.Series(np.arange(5.),index=['a','b','c','d','e'])
+      new_obj = obj.dorp('c')     
+      >>>a    0.0
+      b    1.0
+      d    3.0
+      e    4.0
+      ```
+
+      - 对于dataframe,可以删除任意轴上的索引
+
+    - 索引、选取和过滤
+
+      ```python
+      # 索引选取和过滤
+      obj = pd.Series(np.arange(4.),index = ['a','b','c','c'])
+      print(obj['b'])
+      # 必须嵌套两层
+      print(obj[[1]])
+      print(obj[2:4])
+      print(obj[['b','a']])
+      print(obj[[1,3]])
+      print(obj[obj<2])
+      
+      # 标签的切片和python的普通切片不同，其末端是包含的
+      print(obj['b':'d'])
+      >>>b    1.0
+      c    2.0
+      d    3.0
+      dtype: float64
+      ```
+
+      - 对DataFrame进行索引就是选区一个或多个==列==
+
+        > 首先通过切片或布尔型数组选区行，这种语法源于实践
+        >
+        > 可通过布尔型DataFrame进行索引
+
+        ```python
+        data = pd.DataFrame(np.arange(16).reshape((4,4)),
+                           index=['ohio','colorado','utah','new york'],
+                           columns=['one','two','three','four'])
+        # 索引行
+        data[:2]
+        # 索引列
+        data[['three','one']]
+        # 布尔型
+        data[data['three']<5]
+        data[data['three']<5] = 0
+        ```
+
+      - 为了在DataFrame的==行==上进行标签索引，引入字段  ix 
+
+        ```
+        
+        ```
+
+        
+
+        
+
+      
+
+    
 
 
 
