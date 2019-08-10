@@ -1,3 +1,7 @@
+[TOC]
+
+
+
 ## 第四章 Numpy基础
 
 - numpya是高性能科学计算和数据分析的基础包
@@ -733,9 +737,15 @@ DataFrame是一个表格型的数据结构，有一组有序的列，每列有�
         data = pd.DataFrame(np.arange(16).reshape((4,4)),
                            index=['ohio','colorado','utah','new york'],
                            columns=['one','two','three','four'])
-        # 索引行
+        data
+        >one	two	three	four
+        ohio	0	1	2	3
+        colorado	4	5	6	7
+        utah	8	9	10	11
+        new york	12	13	14	15
+        # 索引行——通过数字索引
         data[:2]
-        # 索引列
+        # 索引列——通过列名
         data[['three','one']]
         # 布尔型
         data[data['three']<5]
@@ -744,17 +754,516 @@ DataFrame是一个表格型的数据结构，有一组有序的列，每列有�
 
       - 为了在DataFrame的==行==上进行标签索引，引入字段  ix 
 
-        ```
+        ```python
+        # 可通过轴标签从DataFrame中选取行和列的子集
+        data.ix['colorado', ['tow', 'three']]
+        >tow      NaN
+        three    6.0
+        Name: colorado, dtype: float64
         
+        data.ix[2]
+        >one       8
+        two       9
+        three    10
+        four     11
+        Name: utah, dtype: int32
         ```
 
-        
+        loc：通过行标签索引数据
 
-        
+        iloc：通过行号索引行数据
+
+        ix：通过行标签或行号索引数据（基于loc和iloc的混合）
+
+    - 算术运算和数据对齐
+
+      pandas可以对不同索引的对象进行算术运算，将对象相加时，如果有不同的索引对，则结果索引就是该索引对的并集
+
+      ```python
+      s1 = pd.Series([7.3,-2.5,3.4,1.5], index = ['a','c','d','e'])
+      s2 = pd.Series([-2.1,3.6,-1.5,4,3.1], index=['a','c','e','f','g'])
+      print(s1,s2,sep='\n')
+      s1
+      >a    7.3
+      c   -2.5
+      d    3.4
+      e    1.5
+      dtype: float64
+      s2
+      >a   -2.1
+      c    3.6
+      e   -1.5
+      f    4.0
+      g    3.1
+      dtype: float64
+      s1+s2
+      >a    5.2
+      c    1.1
+      d    NaN
+      e    0.0
+      f    NaN
+      g    NaN
+      dtype: float64
+      ```
+
+      - 自动数据对齐在不重叠的索引处引入NA值，缺失值在 算术过程中brodcast
+
+      - 对于dataframe对齐操作会发生在行和列上，相加后其索引和列为原来两个DataFrame的并集
+
+      - 在算术方法中填充值
+
+        - 在不同索引的对象进行算术运算时，你可能希望当一个对象的某个轴标签在另一个对象中找不到时填充一个特殊值（比如0)
+
+          ```python
+          df1 = pd.DataFrame(np.arange(12).reshape((3,4)), columns=list('abcd'))
+          df2 = pd.DataFrame(np.arange(20).reshape((4,5)),columns=list('abcde'))
+          print(df1,df2,sep='\n'+'_'*23+'\n')
+          >   a  b   c   d
+          0  0  1   2   3
+          1  4  5   6   7
+          2  8  9  10  11
+          _______________________
+              a   b   c   d   e
+          0   0   1   2   3   4
+          1   5   6   7   8   9
+          2  10  11  12  13  14
+          3  15  16  17  18  19
+          
+          # 相加时没有重叠的部分产生NA
+          df1+df2
+          >a	b	c	d	e
+          0	0.0	2.0	4.0	6.0	NaN
+          1	9.0	11.0	13.0	15.0	NaN
+          2	18.0	20.0	22.0	24.0	NaN
+          3	NaN	NaN	NaN	NaN	NaN
+          
+          # 使用add方法，并传入一个fill_value参数
+          df1.add(df2, fill_value=0)
+          >
+          a	b	c	d	e
+          0	0.0	2.0	4.0	6.0	4.0
+          1	9.0	11.0	13.0	15.0	9.0
+          2	18.0	20.0	22.0	24.0	14.0
+          3	15.0	16.0	17.0	18.0	19.0
+          ```
+
+        - 在对Series和DataFrame重新索引时，可以指定一个填充值
+
+          ```
+          df1 = pd.DataFrame(np.arange(12).reshape((3,4)), columns=list('abcd'))
+          df1
+          >   a  b   c   d
+          0  0  1   2   3
+          1  4  5   6   7
+          2  8  9  10  11
+          
+          # 生成新的DataFrame,而不是改变本身
+          df1.reindex(columns=df2.columns, fill_value=0)
+          >
+          a	b	c	d	e
+          0	0	1	2	3	0
+          1	4	5	6	7	0
+          2	8	9	10	11	0
+          ```
+
+          - add 加法
+          - sub 减法
+          - div 除法
+          - mul 乘法
+
+    - DataFrame和Series之间的运算
+
+      ```python
+      # 计算一个二维数组和某行的差
+      arr = np.arange(12).reshape((3,4))
+      arr - arr[0]
+      >array([[0, 0, 0, 0],
+             [4, 4, 4, 4],
+             [8, 8, 8, 8]])
+      ```
+
+      这就是broadcasting，DataFrame和Series之间的运算也差不多如此
+
+      ```python
+      frame = pd.DataFrame(np.arange(12).reshape((4,3)),columns=list('bde'),
+                           index=['utah','ohil','texas','oregon'])
+      frame
+      >	b	d	e
+      utah	0	1	2
+      ohil	3	4	5
+      texas	6	7	8
+      oregon	9	10	11
+      
+      series = frame.iloc[0]
+      >
+      b    0
+      d    1
+      e    2
+      Name: utah, dtype: int32
+      ```
 
       
 
+      - 默认情况下，DataFrame和Series之间的运算会将Series的索引匹配到DataFrame的列，然后沿着行广播
+
+        ```
+        frame - series
+        >
+        b	d	e
+        utah	0	0	0
+        ohil	3	3	3
+        texas	6	6	6
+        oregon	9	9	9
+        ```
+
+        - 如果某个索引值在DataFrame的列或Series的索引中找不到，则参与计算的两个对象会被重新索引形成并集
+
+          ```python
+          series2 = pd.Series(range(3), index=list('bef'))
+          frame + series2
+          >
+          b	d	e	f
+          utah	0.0	NaN	3.0	NaN
+          ohil	3.0	NaN	6.0	NaN
+          texas	6.0	NaN	9.0	NaN
+          oregon	9.0	NaN	12.0	NaN
+          ```
+
+  - 函数应用和映射
+
+    numpy 的ufuncs(元素级数组方法)也可以用于操作pandas
+
+    ```python
+    frame = pd.DataFrame(np.random.randn(4,3), columns=list('bde'), 
+                        index=['aa','cc','bb','dd'])
+    frame
+    >
+    b	d	e
+    aa	-0.484424	1.231815	0.329560
+    cc	-0.276545	-0.136395	-0.228278
+    bb	-0.725752	0.249103	1.876091
+    dd	0.785835	1.555279	-0.884602
     
+    np.abs(frame)
+    >
+    b	d	e
+    aa	0.484424	1.231815	0.329560
+    cc	0.276545	0.136395	0.228278
+    bb	0.725752	0.249103	1.876091
+    dd	0.785835	1.555279	0.884602
+    ```
+
+    另外一个常见的操作就是将函数应用到有各列或行组成的一维数组上，DataFrame的apply方法可实现：
+
+    ```
+    fun = lambda x: x.max() - x.min()
+    frame.apply(fun)
+    >b    1.511587
+    d    1.691673
+    e    2.760692
+    dtype: float64
+    
+    frame.apply(fun, axis=1)
+    >aa    1.716239
+    cc    0.140150
+    bb    2.601843
+    dd    2.439880
+    dtype: float64
+    ```
+
+    许多常见的数组统计功能都被实现为DataFrame的方法
+
+    除标量值外，传递给apply的函数也可以返回多个值组成的Series
+
+    ```python
+    def f(x):
+        return Series([x.min(), x.max()], index=['min', 'max'])
+    frame.apply(f)
+    >	b	d	e
+    min	-0.725752	-0.136395	-0.884602
+    max	0.785835	1.555279	1.876091
+    ```
+
+    元素即的python函数也可以，如：将frame中各个浮点数格式化字符串，使用applymap
+
+    ```python
+    # format的方法会报错
+    # fm = lambda x:format(x, '.2f')
+    fm = lambda x:'%.2f' %x
+    frame.applymap(fm)
+    >>>b	d	e
+    aa	-0.48	1.23	0.33
+    cc	-0.28	-0.14	-0.23
+    bb	-0.73	0.25	1.88
+    dd	0.79	1.56	-0.88
+    ```
+
+    Series有一个应用于元素级函数的map方法：
+
+    ```
+    frame['e'].map(fm)
+    ```
+
+  - 排序和排名
+
+    根据条件对数据集排序（sorting)也是一种重要的内置运算。要对行或列排序，可使用sort_index方法，将返回一个已排序的新对象
+
+    `frame.sort_index(axis=0, level=None, ascending=True, inplace=False, kind='quicksort', na_position='last', sort_remaining=True, by=None)`
+
+    ```python
+    obj = pd.Series(range(4), index=list('dabc'))
+    obj.sort_index()
+    >>>
+    a    1
+    b    2
+    c    3
+    d    0
+    dtype: int64
+    ```
+
+    对于DataFrame可根据任意一个轴上的索引进行排序
+
+    ```python
+    frame = pd.DataFrame(np.arange(8).reshape((2,4)), index=['three', 'one'], columns=list('dabc'))
+    frame.sort_index()
+    >>>
+    d	a	b	c
+    one	4	5	6	7
+    three	0	1	2	3
+    
+    frame.sort_index(axis=1)
+    >>>
+    a	b	c	d
+    three	1	2	3	0
+    one	5	6	7	4
+    ```
+
+    默认是升序的，也可以降序排列
+
+    ```
+    frame.sort_index(axis=1, ascending=False)
+    >>>
+    d	c	b	a
+    three	0	3	2	1
+    one	4	7	6	5
+    ```
+
+    要对Series进行排序，可使用其sort_values方法
+
+    ```python
+    obj = Series([4, 7, -3, 2])
+    obj.sort_values()
+    >>>
+    2   -3
+    3    2
+    0    4
+    1    7
+    dtype: int64
+        
+    # 缺失值默认放到末尾
+    obj = pd.Series([4,np.nan, 7, -3,np.nan, 2])
+    obj.sort_values()
+    >>> 
+    3   -3.0
+    5    2.0
+    0    4.0
+    2    7.0
+    1    NaN
+    4    NaN
+    dtype: float64
+    ```
+
+    对DataFrame根据多个列进行排序,使用sort_values
+
+    `frame.sort_values(by, axis=0, ascending=True, inplace=False, kind='quicksort', na_position='last')`
+
+    ```
+    frame = pd.DataFrame({'b':[4,7,-3,2],'a':[0,1,0,1]})
+    frame.sort_values(by='b')
+    >>>
+    b	a
+    2	-3	0
+    3	2	1
+    0	4	0
+    1	7	1
+    
+    # 根据多列排序，传入列名的列表给by
+    frame.sort_values(by=['a', 'b'])
+    >>>
+    b	a
+    2	-3	0
+    0	4	0
+    3	2	1
+    1	7	1
+    ```
+
+    排名（ranking）跟排序关系密切，且会增设一个排名值，可以根据某种规则破环平级关系
+
+    ```python
+    obj.rank(axis=0, method='average', numeric_only=None, na_option='keep', ascending=True, pct=False)
+    
+    method : {'average', 'min', 'max', 'first', 'dense'}
+        * average: average rank of group
+        * min: lowest rank in group
+        * max: highest rank in group
+        * first: ranks assigned in order they appear in the array
+        * dense: like 'min', but rank always increases by 1 between groups
+    
+    
+    obj = pd.Series([7,-5,7,4,2,0,4])
+    # 默认情况下是为各组分配一个平均排名
+    obj.rank()
+    >>>
+    0    6.5
+    1    1.0
+    2    6.5
+    3    4.5
+    4    3.0
+    5    2.0
+    6    4.5
+    dtype: float64
+    
+    # 根据值在原数据中出现的顺序排名
+    obj.rank(method='first')
+    0    6.0
+    1    1.0
+    2    7.0
+    3    4.0
+    4    3.0
+    5    2.0
+    6    5.0
+    dtype: float64
+    ```
+
+    排名时破坏平衡关系的method选项
+
+    - average      默认：在相等分组中，为各个值分配平均排名
+
+    - min             相同的排名使用整个分组的最小排名
+
+    - max            相同排名使用整个分组的最大排名
+
+    - first             按值在原始数据中出现的顺序分配排名
+
+      ```python
+      df = pd.DataFrame(data={'Animal': ['cat', 'penguin', 'dog', 'spider', 'snake'],
+                              'Number_legs': [4, 2, 4, 8, np.nan]})
+      df
+      >>>
+      Animal	Number_legs
+      0	cat	4.0
+      1	penguin	2.0
+      2	dog	4.0
+      3	spider	8.0
+      4	snake	NaN
+      
+      df['default_rank_average'] = df['Number_legs'].rank(method='average')
+      df['max_rank'] = df['Number_legs'].rank(method='max')
+      df['min_rank'] = df['Number_legs'].rank(method='min')
+      df['first_rank'] = df['Number_legs'].rank(method='first')
+      df['NA_botton'] = df['Number_legs'].rank(na_option='bottom')
+      df['pct_rank']  = df['Number_legs'].rank(pct=True)
+      df
+      >>>	Animal	Number_legs	default_rank_average	max_rank	min_rank	first_rank	NA_botton	pct_rank
+      0	cat	    4.0	2.5	3.0	2.0	2.0	2.5	0.625
+      1	penguin	2.0	1.0	1.0	1.0	1.0	1.0	0.250
+      2	dog	    4.0	2.5	3.0	2.0	3.0	2.5	0.625
+      3	spider	8.0	4.0	4.0	4.0	4.0	4.0	1.000
+      4	snake	NaN	NaN	NaN	NaN	NaN	5.0	NaN
+      ```
+
+  - 带有重复值的轴索引
+
+    许多pandas函数(reindex)都要求标签唯一，但并不是强制性的
+
+    ```python
+    # 有重复索引的Series
+    obj = pd.Series(range(5), index=['a','a','b','b','c'])
+    obj
+    >>>
+    a    0
+    a    1
+    b    2
+    b    3
+    c    4
+    dtype: int64
+        
+    # 索引的is_unique属性可告诉你是否唯一
+    obj.index.is_unique
+    >>>False
+    ```
+
+    带有重复索引的对象，数据选取时，索引对应多个值则返回Series,索引对应单个值则返回标量
+
+    ```python
+    obj['c']
+    >>>4
+    obj['a']
+    >>>
+    a    0
+    a    1
+    dtype: int64
+    ```
+
+#### 汇总和计算描述统计
+
+pandas拥有一组常用的数学和统计方法，用于从Series中提取单个值，或从DataFrame中提取一个Series,跟对应的Numpy数组方法相比，他们都是基于没有缺乏数据的假设而构建的
+
+```
+# 按列求和
+df.sum()
+# 按行求和
+df.sum(axis=1)
+# NA值会自动被排除，除非整个切片都是NA
+# skipna选项可以禁用该功能，含有NA的行或列求解为NA
+
+obj.mean(axis=None, skipna=None, level=None, numeric_only=None, **kwargs)
+```
+
+约简方法选项
+
+- axis 约简的轴
+- skipna   排除缺失值，默认为True
+- level   如果轴是层次化索引的，则根据level分组约简
+
+有些轴是间接统计的，比如idxmin 和 idxmax
+
+有些则是累计型的，比如 cumsum
+
+有些既不是约简也不是累计，而是一次性产生多个汇总统计，比如describe
+
+描述和统计汇总：
+
+| 方法           | 说明                             |
+| -------------- | -------------------------------- |
+| count          | 非NA值的数量                     |
+| describe       | 计算汇总统计                     |
+| min、max       | 最值                             |
+| idxmin、idxmax | 获取到最大、最小值的索引         |
+| quantile       | 样本的分位数（0到1）             |
+| sum            | 和                               |
+| mean           | 均值                             |
+| median         | 算术中位数（50%分位数）          |
+| mad            | 根据均值计算平均绝对离差         |
+| var            | 样本值的方差                     |
+| std            | 样本值的标准差                   |
+| skew           | 样本值的偏度(三阶矩)             |
+| kurt           | 样本值的峰度（si'jie）           |
+| cumsum         | 样本值的累计和                   |
+| cummin、cummax | 累计值的最值                     |
+| cumprod        | 样本值的累计积                   |
+| diff           | 计算一阶差分（对时间序列很有用） |
+| pct_change     | 计算百分数变化                   |
+
+#### 相关系数和协方差
+
+有些统计，比如相关系数和协方差是通过参数对计算出来的
+
+```
+# pandas.io.data已经用不成了,得替换为pandas_datareader
+# pip3 install pandas_datareader
+import pandas_datareader.data as web
+```
 
 
 
@@ -764,3 +1273,162 @@ DataFrame是一个表格型的数据结构，有一组有序的列，每列有�
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+## 第六章 数据加载、存储与文件格式
+
+### 读写文本格式的数据
+
+### 二进制数据格式
+
+### 使用HTML和Web API
+
+### 使用数据集
+
+
+
+## 第七章 数据规整化：清理、转换、合并、重塑
+
+### 合并数据集
+
+### 重塑和轴旋转
+
+### 数据转换
+
+### 字符串操作
+
+### 示例：USDA食品数据库
+
+
+
+## 第八章 绘图和可视化
+
+### maplotlib入门
+
+### pandas绘图函数
+
+### 绘制地图：图形化显示海地地震危机数据
+
+### python图形化工具生态系统
+
+
+
+## 第九章 数据聚合与分组运算
+
+### GroupBy技术
+
+### 数据聚合
+
+### 分组级运算与转换
+
+### 透视表和交叉表
+
+### 示例：2012联邦选举委员会数据库
+
+
+
+## 第十章 时间序列
+
+### 日期和时间数据类型及工具
+
+### 时间序列基础
+
+### 日期的范围、频率以及移动
+
+### 时区处理
+
+### 时期及其算术运算
+
+### 重采样及频率转换
+
+### 时间序列绘图
+
+### 移动窗口函数
+
+### 性能和内存使用方面的注意事项
+
+
+
+## 第十一章 金融和经济数据应用
+
+### 数据规整化方面的问题
+
+### 分组变换和分析
+
+### 更多示例应用
+
+
+
+## 第十二章 Numpy高级应用
+
+### ndarray对象的内部机制
+
+### 高级数组操作
+
+### 广播
+
+### ufunc高级应用
+
+### 结构化和记录式数组
+
+### 排序话题
+
+### numpy的matrix类
+
+### 高级数组输入输出
+
+### 性能建议
+
+ 

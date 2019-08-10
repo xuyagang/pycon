@@ -2236,7 +2236,7 @@ A = [Y,Z][bool(X)]
         if test2:break              # exit loop now,skip else
         if test3:continue           # go to top of loop now,to test
     else:
-        <statements2>               # run if we 
+        <statements2>               # run if we didn't hit a 'break'
     ```
 
     - pass
@@ -2353,123 +2353,1300 @@ A = [Y,Z][bool(X)]
 
   - 修改列表
 
-    ```
+    ```python
     L = [1,2,3,4,5]
-    for i in L:
+    for x in L:
         x += 1
+    # 运行后得到 
     L
-    >[]
+    >[1,2,3,4,5]
+    x
+    >6
+    
+    # 这样并不行，因为修改的是循环变量x,而不是列表L
+    
+    # 要在遍历的时候修改列表，我们需要索引，让我们在遍历时替每一个位置赋一个已更新的值，range和len组合可以替我们产生所需要的索引
+    L = [1,2,3,4,5]
+    for i in range(len(L)):
+        L[i] += 1
+    L
+    > [2,3,4,5,6]
+    # for i in L 这种循环会遍历实际的元素，而不是列表的位置
+    
+    # 等效的while循环
+    i = 0
+    while i < len(L):
+        L[i] += 1
+        i += 1
+    L
+    >[3,4,5,6,7]
+    
+    # 列表解析也能做类似的工作，但对最初的列表没有进行原处修改
+    [x + 1 for x in L]
     ```
 
-    
+  - 并行遍历：zip 和 map
 
-  
+    > zip:会取得一个或多个序列为参数，然会元组的列表（将序列中并排的元素配对）
+    >
+    > - zip是一个可迭代对象，包含在list中调用会一次性显示所有结果
 
+    ```
+    l1 = [1,2,3,4]
+    l2 = [5,6,7,8]
+    zip(l1, l2)
+    ><zip at 0x1f0112655c8>
+    list(zip(l1, l2))
+    >  [(1, 5), (2, 6), (3, 7), (4, 8)]
+    ```
 
+    - zip可以接受任何类型的序列（可迭代对象，包括文件）可以有多个参数，
 
+      ```python
+      a,b,c = (1,2,3),(4,5,6),(7,8,9)
+      list(zip(a,b,c))
+      >[(1, 4, 7), (2, 5, 8), (3, 6, 9)]
+      ```
 
+      - 长度不同时，zip会以==最短==序列的长度为准类截断所得的元组
 
+    > map: 会带一个函数，以及一个或多个序列参数，然后用从序列中取得的元素调用函数并收集结果
 
+    - 使用zip构造字典
 
+      ```python
+      keys = ['spam', 'eggs', 'toast']
+      vals = [1, 3, 5]
+      list(zip(keys, vals))
+      >[('spam', 1), ('eggs', 3), ('toast', 5)]
+      D = {}
+      for k,v in zip(keys, vals): D[k] = v
+      D
+      >  {'spam': 1, 'eggs': 3, 'toast': 5}
+      ```
 
+  - 索引和元素：enumerate
 
+    > 有些程序中我们需要索引和元素，这是一个简单的for循环
 
+    ```python
+    S = 'spam'
+    offset = 0
+    for i in S：
+       print(i, offset)
+       offset += 1
+    ```
 
+    - 有一个新的内置函数，可以为我们做这件事
 
+    ```
+    S = 'spam'
+    for (index, item) in enumerate(S):
+        print(index,item)
+    >0 s
+    1 p
+    2 a
+    3 m
+    ```
 
+    - enumerate函数返回一个生成器对象，这个对象有一个\_\_next\_\_的方法，每次迭代它会返回一个（index, value）的元组，我们可以在for循环中通过元组赋值运算将元组解包
 
+      - 我们一般不会看其作用机制，因为迭代环境（包括列表解析）会自动执行迭代协议
 
+        ```
+        [c * i for (i,c) in enumerate(S)]
+        ```
 
 
+- 总结：
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+  探索了python 的循环语法，深入学习while和for循环，学习其else分句.也研究了break和continue,他们只有在循环中才有意义，介绍了几个在for循环中常用的内置工具，包括range、zip、map、enumerate.下一章将介绍迭代器的概念，
 
 
 
 ### 第十四章_迭代器和解析（第一部分）
 
+#### 迭代器：初探
+
+python中for循环、列表解析、in成员测试、以及map内置函数等都可用于可迭代对象
+
+- 可迭代对象，是序列观念的通用化，包括实际序列和按照需求而计算的虚拟序列
+
+#### 文件迭代器
+
+文件对象有个readline的方法，可以一次从一个文件中读取一行，到达文件末尾时，会返回空字符串，我们通过它来检测并跳出循环
+
+```
+f = open('test.txt')
+f.readline()
+f.readline()
+```
+
+还有另外一个方法，名为\_\_next\_\_,每次调用会返回下一行，唯一的区别，==\_\_next\_\_会引发内置的stopIteration异常，==而不是返回空字符串
+
+- 可迭代的——指的是支持iter的对象
+- 迭代器——指的是iter返回的一个支持next的对象
+
+这个接口就是 python中的迭代协议：有\_\_next\_\_方法的对象会前进得到下一个结果，而在末尾时，会引发Stop Iteration。**python中，任何这类对象都是可迭代的**
+
+- 任何这类对象也能以for循环或其他迭代工具遍历，因为迭代工具内部工作起来都是在每次迭代中调用\_\_next\_\_,并且捕捉到StopIteration异常来确定何时离开
+
+  - 逐行读取文本最佳的方式就是不去读取，让for循环每轮自动调用next而自动到下一行
+
+    ```python
+    for line in open('test.txt'):
+        print(line.strip(),end='')
+    # 相同效果的原始方式
+    for line in open('test.txt').readlines():
+        print(line.strip(), end='')
+    ```
+
+  - readlines不是最好的方式，它是把整个文件一次性加载到内存，如果文件太大会导致计算机内存空间不够，甚至不能工作
+
+  - while循环逐行读取文件
+
+    ```python
+    f = open('test.txt')
+    while True:
+        line = f.readline()
+        if not line: break
+        print(line.upper(), end='')
+    ```
+
+    尽管这样，比起迭代器for循环版本，这可能运行的更慢一些，因为迭代器在==python中是C语言的速度==运行的，而==while循环则是通过python虚拟机运行==python字节码
+
+#### 手动迭代：iter和next
+
+内置函数next,会自动调用对象的\_\_next\_\_方法，`next(X)`等价于`X.__next__()` ,前者简单很多
+
+- for循环开始时，会 通过它传给iter内置函数，从**可迭代对象**中获得一个**迭代器**
+
+自动和手动迭代之间的对等性：
+
+```python
+# 自动迭代
+L = [1, 2, 3]
+for i in L:
+    print(i ** 2, end=' ')
+    
+# 手动迭代
+L = [1, 2, 3]
+I = iter(L)
+while True:
+    try:
+        i = next(I)
+    except StopIteration:
+        break
+    print(i ** 2, end = ' ')
+```
+
+#### 其他内置类型的迭代器
+
+- 遍历字典键的方法是明确的获取键的列表
+
+  ```python
+  D = {'a':1, 'b':2, 'c':3}
+  for key in D:
+      print(key, D[key])
+  > a 1
+  b 2
+  c 3
+  ```
+
+  - 我们不需要调用keys方法来遍历字典键——for循环将使用迭代协议在每次迭代的时候获取一个键
+
+- 迭代协议让我们必须把某些结果包装到一个list调用中一次性看到他们的值：
+
+  ```python
+  list(range(5))
+  >[0, 1, 2, 3, 4]
+  
+  # enumerate的工作方式
+  E = enumerate('spam')
+  I = iter(E)
+  next(I)
+  > (0, 's')
+  list(enumerate('spam'))
+  >[(0, 's'), (1, 'p'), (2, 'a'), (3, 'm')]
+  ```
+
+#### 列表解析基础知识
+
+列表解析写在一个方括号中，最终构建了一个新的列表
+
+```
+# 等价实现
+res = []
+for x in L:
+    res.append(x + 10)
+```
+
+列表解析在技术上并非必要，但编写起来更简单，比直接编写for循环运行的更快（快一倍），因为他们的迭代在解释器内部是以C语言的速度执行，而不是以手动python代码实现，特别是对于较大的数据集合，这是使用列表解析的一个主要性能优点
+
+#### 文件上使用列表解析
+
+文件对象的readlines方法，能一次性的==把文件载入到行字符串的一个列表中==
+
+列表解析像for循环是个迭代环境，我们甚至不必提前打开文件，如果我们在表达式中打开，列表解析将自动调用文件的next方法，
+
+```
+lines = [line.rstrip() for line in open('script.py')]
+```
+
+表达式做了很多隐式的工作，扫描文件自动构建列表
+
+- 高效，速度快
+
+#### 扩展的列表解析
+
+表达式中嵌套的for循环可以有一个相关的if子句
+
+```python
+lines = [line.rstrip() for lien in open('script.py') if line[0] == 'p']
+
+# for的等价实现
+res = []
+for line in open('script.py'):
+    if line[0] == 'p':
+        res.append(line.rstrip())
+```
+
+- for的形式实现复杂，运行慢
+
+列表解析可以变得更复杂，可以包含嵌套的循环，可被编写为一系列的for子句
+
+```python
+# 构建一个x+y连接的列表，把一个字符串中的每个x和另外一个字符串中的每个y连接起来
+[x + y for x in 'abc' for y in 'lmn']
+> ['al', 'am', 'an', 'bl', 'bm', 'bn', 'cl', 'cm', 'cn']
+```
+
+#### 其他迭代环境
+
+> 后面我们将会看到用户定义的类也可以实现迭代协议
+
+可对对象从左到右扫描的工具都实现了迭代协议，包括for循环，列表解析，in成员关系测试，map,sorted,zip
+
+- map：把一个函数调用应用于传入的可迭代对象的每一项，可用于列表解析，但有局限性，因为它需要传入一个函数而不是一个表达式，返回一个可迭代对象，必须使用list来查看所有的值
+- sorted==排序==可迭代对象中的项
+  - 和其他不同的是，sorted返回一个列表而不是可迭代对象
+- zip==组合==可迭代的对象中的项
+- enumerate根据相对位置来配对可迭代的对象中的项
+- filter选择一个函数为真的项
+- reduce针对可迭代的对象中==成对的项==运行一个函数
+
+其他内置函数也支持可迭代协议，但很难用在和文件相关的实例中，可以接受任何可迭代对象作为一个参数，并使用迭代协议扫描，但==返回单个结果==：
+
+- sum计算对象总和
+- any和 all分布返回True或False
+- max和min分别返回最大最小值（也可以 作用于文件，选择具有最高和最低字符串值的行）
+
+python内置工具集中，list,tuple,join都将一个打开的文件上工作，并且自动一次读一行
+
+```
+list(open('script.py'))
+tuple(open('script.py'))
+'$$'.join(open('script.py'))
+```
+
+函数调用中有一个特殊的*arg形式，它会把一个集合的值解包为单个的参数，他也会接受任何可迭代对象，包括文件
+
+- zip可用来unzip 已经zip过的元组
+
+  ```python
+  a = (1, 2)
+  b = (3, 4)
+  list(zip(a,b))
+  >[(1, 3), (2, 4)]
+  
+  x,y = zip(*zip(a,b))
+  x
+  >(1, 2)
+  y
+  > (3, 4)
+  ```
+
+#### python3中新的可迭代对象
+
+像zip这样的函数返回可迭代对象，根据需求产生结果，交互环境中需要额外的录入才能看到结果，但对大型程序来说，这样延迟计算会节约内存并避免暂停
+
+- range
+
+  > range返回一个迭代器，如果需要显示结果，必须使用list()来强制生成一个真正的范围列表
+
+- map、zip、filter迭代器
+
+  > 和range类似，将结果转变成迭代器以节约内存空间，而不是在内存中一次性生成一个结果列表，和range不同的是，他们都是自己的迭代器——在遍历结果一次后就用尽了
+
+  ```python
+  M = map(abs,(-1, 0, 1))
+  M
+  ><map at 0x1f01141c320>
+  next(M)
+  > 1
+   for i in M:
+       print(i)
+  ```
+
+#### 多个迭代器VS单个迭代器
+
+> range迭代器，支持索引，不是自己的迭代器，支持结果有多个迭代器，这些迭代器会记住他们的位置
+
+```python
+R = range(3)
+next(R)
+> 'range' object is not an iterator
+I1 = iter(R)
+next(I1)
+>  0
+I2 = iter(R)
+next(I2)
+>  0
+next(I1)
+>  1
+```
+
+相反zip,map,filter 不支持相同结果上的多个活跃迭代器
+
+```python
+Z = zip((1,2,4),(10,11,12))
+I1 = iter(Z)
+I2 = iter(Z)
+next(I1)
+>(1, 10)
+next(I1)
+>(2, 11)
+next(I2)
+>(4, 12)
+I1 ==  I2
+>True
+```
+
+```
+M = map(abs,(-1, 0, 1))
+I1 = iter(M); I2 = iter(M)
+I1 == I2
+>True
+next(I1)
+> 1
+next(I2)
+> 0
+next(I1)
+> 1
+```
+
+可以用类来编写自己的可迭代对象，通过iter调用返回一个新的对象来支持多个迭代器，单个迭代器一般意味着一个对象返回其本身，生成器函数和表达式的行为就像map和zip一样，支持单个的活跃迭代器
+
+#### 字典试图迭代器
+
+> 字典的keys,values,items方法返回可迭代的试图对象，他们一次产生一个结果项，而不是在内存中一次产生7全部结果列表
+
+```python
+D = dict(a = 1, b =2, c =3)
+D
+>{'a': 1, 'b': 2, 'c': 3}
+k = D.keys()
+k
+> dict_keys(['a', 'b', 'c'])
+# 键的视图不是可迭代对象
+next(k)         
+> 'dict_keys' object is not an iterator
+# 转换为可迭代对象
+I = iter(K) 
+```
+
+```python
+for k,v in D.items(): print(k,v,end=' ')
+> a 1 b 2 c 3
+```
+
+- python字典有自己的迭代器，它返回连续的键，无需调用keys
+
+  ```python
+  I = iter(D)
+  next(I)
+  > 'a'
+  next(I)
+  > 'b'
+  
+  for k in D: print(k,end = ' ')
+  > a b c
+  
+  D = dict(a = 1, c =3, b =2)
+  D
+  >{'a': 1, 'c': 3, 'b': 2}
+  for k in sorted(D.keys()):print(k,D[k],end=' ')
+  >a 1 b 2 c 3
+  # 等价方式
+  for k in sorted(D):print(k,D[k],end=' ')
+  >a 1 b 2 c 3
+  ```
+
+#### 其他迭代器主题
+
+-  yield语句：用户定义的函数，可以转换为可迭代的生成器函数
+- 当编写在圆括号中的时候，列表解析可以变为生成器表达式
+- 用户定义的类，通过\_\_iter\_\_和\_\_getitem\_\_运算符重载变得可迭代
+
+
+
 ### 第十五章_文档
+
+文档涉及python的语法模型，也是想了解python工具集的读者的资源
+
+#### python文档资源
+
+> 内置工具信息
+>
+> 文档字符串——docstring
+>
+> PyDos系统
+
+| 形式                    | 角色                       |
+| ----------------------- | -------------------------- |
+| \# 注释                 | 文件中的文档               |
+| dir函数                 | 对象中可用属性的列表       |
+| 文档字符串：\_\_doc\_\_ | 附加在对象上的文件中的文档 |
+| PyDoc: help(函数)       | 对象的交互帮助             |
+| PyDoc: HTML报表         | 浏览器中的模块文档         |
+| 标准手册                | 正式的语言和库的说明       |
+| 网站资源                | 在线教材，例子             |
+| 出版的书籍              | 商业参考书籍               |
+
+#### # 注释
+
+井号注释是最基本的方式，python会忽略#之后的所有文字（只要井号不是位于字符串常量中），这类注释只能从源代码中看到，要编写能更广泛使用的注释，请使用文档字符串
+
+文档字符串适用于大型功能的文档，#注释适用于较小功能的文档
+
+#### dir函数
+
+抓取对象内可用属性列表的方式（例如对象的方法和简单是数据项）
+
+可用来查看内置对象类型提供了哪些属性，可运行dir并传入所需要类型的常量
+
+```
+dir([])
+dir('')
+# 也可将类型的名称传给dir
+dir(str) == dir('')
+dir(list) == dir([])
+```
+
+- 可作为记忆提醒器，提供属性名称的列表，但并没有告诉你名称的意义
+
+#### 文档字符串：\_\_doc\_\_
+
+python 支持可自动附加在对象上的文档，在运行时可保存查看
+
+从语法上来说，这类注释时写成字符串，放在模块文件、函数以及类语句的顶端，就在任何可执行程序代码前（#注释在其前也没关系），python会自动封装这个字符串，也就是所谓的文档字符串，使其成为相应对象的\_\_doc\_\_属性
+
+#### 用户定义的文档字符串
+
+考虑下面的文件——docstring.py
+
+```python
+"""
+Module documentation
+Words Go Here
+"""
+
+spam = 40
+
+def square(x):
+    """
+    function documentation
+    can we have your liver then?
+    """
+    return x**2              # square
+
+class Employee:
+    'class documentation'
+    pass
+print(square(4))
+print(square.__doc__)
+```
+
+文档协议的重点在于，注释会保留在_\_doc\_\_属性中以供查看（文件导入后）
+
+因此要显示模块以及其打算关联的文档字符串，我们只需导入这个文件，打印其_\_doc\_\_属性
+
+```python
+import docstring
+print(docstring.__doc__)
+print(docstring.square.__doc__)
+print(docstring.Employee.__doc__)
+
+>Module documentation
+Words Go Here
+
+
+    function documentation
+    can we have your liver then?
+    
+class documentation
+```
+
+- 要取出模块中类的方法函数字符串，可访问`module.class.method.__doc__`
+
+#### 文档字符串标准
+
+该有什么内容，并没有标准，有些公司有内部标准，现已经有各种标记语言和模板协议(例如HTML，XML)
+
+目前文档字符串没有标准，想用就别犹豫
+
+#### 内置文档字符串
+
+python中内置模块和对象都使用该技术，在dir返回的属性列表前后加上文档
+
+要查看内置模块的可读说明时，可将其导入，并打印其\_\_doc\_\_字符串
+
+内置模块内的函数、类、方法在其\_\_doc\_\_属性内也有附加的说明信息
+
+```
+import sys
+print(sys.__doc__)
+
+# 也可用于读取内置函数的说明
+print(int.__doc__)
+```
+
+这种方式可以查看内置工具的大量信息，但不必这样做，help函数会自动做这件事
+
+#### PyDoc：help函数
+
+有很多的方式可启用PyDoc,包括命令行脚本选项，最主要的PyDoc接口是内置的help函数和PyDoc GUI/HTML接口。help函数会启用PyDoc从而产生简单的文字报表
+
+- help() 期待有个对象的引用值传入，对于较大对象，help显示会分为几段
+  - class、function、data、file等
+- help也能用在模块上
+
+#### 常见编写代码的陷阱
+
+- if\while\for复合语句末尾要加冒号
+
+- 从第一行开始，确定顶层程序从代码第一行开始，包括在模块文件中输入的无嵌套的代码
+
+- 空百行在交互模式提示符下很重要，空白行用来结束语句
+
+- 缩进要一致
+
+- 不要在python中写C代码
+
+- 使用简单的for而不是while和range,for总是容易写并且运行起来更快
+
+- 注意赋值语句中的可变对象
+
+- 不要期待在原处修改对象的函数会返回结果,调用时不要对其结果赋值，
+
+  - list.append()
+
+  - list.sort()
+
+    ```python
+    # 结果把列表指定为None
+    mylist = mylist.append(x)
+    ```
+
+- 一定要使用括号调用函数
+
+- 不要在导入和重载中使用扩展名或路径,因为模块可能有.py以外的其他后缀（如 .pyc）
+
+  ```
+  # 在import语句中省略目录路径和文件字尾
+  # 导入mod.py
+  import mod
+  ```
+
+  
 
 ## 第四部分_函数
 
 ### 第十六章_函数基础
 
+一个函数就是将一些语句集合在一起的部件，能够不止一次的在程序中运行，函数还能计算出一个返回值，能够改变作为函数输入的参数
+
+函数是在编程过程中剪剪贴贴的替代——我们不再有一个操作代码的冗余副本，而是将代码包含到一个单独的函数，大大减少了以后的工作
+
+==函数是python为了代码最大程度的重用和最小化代码冗余而提供的最基本的程序结构==
+
+- 函数相关的表达式
+  - calls    myfun(args)
+  - def
+  - return
+  - global
+  - nonlocal
+  - yield
+  - lambda
+
+#### 为何使用函数
+
+- 最大化代码重用和最小化代码冗余
+
+  便于多次使用和维护
+
+- 流程的分解
+
+  将一个系统分割为不同部分
+
+> 函数基本概念、作用域、参数传递、生成器、函数式工具、多态
+
+#### 编写函数
+
+- def是可执行代码——函数并不存在，直到python运行了def后才存在
+  - 在if语句、while循环、甚至是其他的def中嵌套是合法的
+  - 典型操作中，def语句在模块文件中编写，并自然而然的在模块文件第一次导入的时候生成定义的函数
+- def创建了一个对象并将其赋值给某一变量
+- lambda创建一个对象但将其作为结果返回
+- return将一个结果对象发送给调用者
+- yield向调用者发回一个结果对象，但记住它离开的地方
+  - 生成器函数通过yield语句返回值，并挂起他们的状态以便稍后能够恢复状态
+- global声明了一个模块级别的变量并被赋值
+  - 默认情况下在一个函数中被赋值的对象，是函数的本地变量，仅在函数运行过程中存在
+  - 为了分配一个可以在整个模块中都可以使用的变量名，函数需要在global语句将它列举出来
+  - 变量名需要关注它的作用域（变量存储的地方），并且是通过实现赋值语句将其绑定至作用域的
+- nonlocal声明了将要赋值的一个封闭的函数变量
+- 函数通过赋值传递
+- 参数，返回值以及变量并不是声明
+  - 可以传递任意类型的参数，也可以返回任意类型的对象
+
+##### def语句
+
+```python
+def name(args):
+    ...
+    return value
+```
+
+return可出现在任何地方，return是可选的，如果没有出现，函数将在控制流执行完成后结束
+
+没有返回值的函数自动返回了None,这个值往往被忽略
+
+##### def语句是实时执行的
+
+def语句运行时创建一个新的函数对象，并将其赋值给一个变量名
+
+def可出现在任何语句可出现的地方，甚至嵌套在其他语句
+
+def在运行时才进行评估，在def之中的代码在函数调用后才会评估
+
+```python
+if test:
+    def func():
+        ...
+else:
+    def func():
+        ...
+```
+
+```python
+def func(): ...   # create function object
+func()            # call object
+func.attr = value # attach attributes
+```
+
+##### 调用
+
+通过在函数名后加括号调用（运行）这个函数
+
+##### 多态
+
+有时函数的意义取决于输入的参数类型，* 可以执行乘法，也可以执行字符串赋值，它针对被处理的对象做了随机应变——这种依赖类型的行为称为多态（操作的意义取决于被操作的对象的类型）
+
+python是动态语言，多态随处可见
+
+如果传给函数的对象有预期的方法和表达式操作符，他们对于函数的逻辑来说有着即插即用的兼容性
+
+多态的编程模型意味着必须测试 代码取检测错误，而不是 采用编辑器用来检测类型错误的类型声明，以初步测试为代价，减少了我们必须编写的代码
+
+```python
+def intersect(seq1, seq2):
+    res = []
+    for x in seq1:
+        if x in seq2:
+            res.append(x)
+    return res
+```
+
+##### 本地变量
+
+本地变量只是在def内的函数中是可见的，并且仅在运行时是存在的
+
+所有的在函数内部进行赋值的变量名都默认为本地变量
+
+
+
 ### 第十七章_作用域
+
+当在一个程序中使用变量名时，python创建、改变、或查找变量都是在所谓的命名空间中进行的，也就是说代码中的变量名被赋值的位置决定了能被访问到的范围
+
+函数为程序增加了一个命名空间层：
+
+- 在def内定义的变量名能够被def内的代码使用，不能在函数的外部引用这样的变量名
+- def之中的变量名和def之外的变量名并不冲突，一个在def之外被赋值的变量X和在这个def之中赋值的变量X是完全不同的变量
+
+变量可以在3个不同的地方分配，分别对应3种不同的作用域：
+
+- 如果一个变量在def内赋值，它被定位在函数之内
+- 如果一个变量在一个嵌套的def种赋值，对嵌套的函数来说，它是非本地的
+- 如果在def之外赋值，它就是整个文件全局的
+
+我们将其称为语义作用域，函数作用域有助于防止程序之中变量名的冲突，有助于函数成为更加独立的程序单元
+
+#### 作用域法则
+
+- 内嵌的模块是全局作用域，每一个模块都是一个全局作用域，对于外部的全局变量就成为一个模块对象的属性，
+
+- 全局作用域的作用范围仅限于单个文件
+
+  > 在一个文件的顶层的变量名仅对于这个文件内部的代码而言是全局的
+
+- 每次对函数的调用都创建了一个新的本地作用域
+
+- 赋值的变量名除非声明为全局变量或非本地变量，否则均为本地变量
+
+  > 默认在函数内部的变量名是本地作用域内的
+
+  - 如果需要给一个在函数内部却位于模块文件顶层的变量名赋值，需要在函数内部通过global语句声明
+  - 如果需要给位于一个嵌套的def中的名称赋值，可以通过nonlocal语句来声明
+
+- 所有其他的变量名都可以归纳为本地、全局或内置变量
+
+
+
+交互模式运行的代码实际上是输入到一个叫做\_\_main\_\_的内置模块中
+
+一个函数内部的任何赋值都会把一个名称划为本地的：包括 =语句、import中的模块名称、def中的函数名称、函数参数名等
+
+- 原处修改不会把变量划分为本地变量
+
+#### 变量名解析：LEGB原则
+
+对于一个def语句：
+
+- 变量名引用分为三个作用域进行查找：首先是本地，之后是函数内、之后是全局最后是内置
+- 默认 情况下，变量名赋值会创建或者改变本地变量
+- 全局声明和非本地声明将赋值的变量名映射到模块文件内部的作用域
+
+#### 作用域实例
+
+```python
+# global scope
+X = 99
+def fun(Y):
+    # local scope
+    Z = X + Y
+    return Z
+    
+# 全局变量名：X,fun
+# 本地变量名：Z，Y
+```
+
+本地变量是作为临时变量名，只有在函数运行时才需要他们
+
+- 函数使用的绝大多数变量只会在函数自身内部出现，而不是模块文件的任意其他地方
+- 本地变量名不会改变程序其他程序，易于调试
+
+#### 内置作用域
+
+内置作用域通过一个名为__builtins__的标准库模块来实现，这个变量名自身并没有放入内置作用域，所以必须导入才能使用：`import builtins`
+
+```python
+import builtins
+dir(builtins)
+>['ArithmeticError', 'AssertionError', 'AttributeError', 'BaseException', 'BlockingIOError', 'BrokenPipeError', 'BufferError', 'BytesWarning', 'ChildProcessError', 'ConnectionAbortedError', 'ConnectionError', 'ConnectionRefusedError', 'ConnectionResetError', 'DeprecationWarning', 'EOFError', 'Ellipsis', 'EnvironmentError', 'Exception', 'False', 'FileExistsError', 'FileNotFoundError', 'FloatingPointError', 'FutureWarning', 'GeneratorExit', 'IOError', 'ImportError', 'ImportWarning', 'IndentationError', 'IndexError', 'InterruptedError', 'IsADirectoryError', 'KeyError', 'KeyboardInterrupt', 'LookupError', 'MemoryError', 'ModuleNotFoundError', 'NameError', 'None', 'NotADirectoryError', 'NotImplemented', 'NotImplementedError', 'OSError', 'OverflowError', 'PendingDeprecationWarning', 'PermissionError', 'ProcessLookupError', 'RecursionError', 'ReferenceError', 'ResourceWarning', 'RuntimeError', 'RuntimeWarning', 'StopAsyncIteration', 'StopIteration', 'SyntaxError', 'SyntaxWarning', 'SystemError', 'SystemExit', 'TabError', 'TimeoutError', 'True', 'TypeError', 'UnboundLocalError', 'UnicodeDecodeError', 'UnicodeEncodeError', 'UnicodeError', 'UnicodeTranslateError', 'UnicodeWarning', 'UserWarning', 'ValueError', 'Warning', 'WindowsError', 'ZeroDivisionError', '__build_class__', '__debug__', '__doc__', '__import__', '__loader__', '__name__', '__package__', '__spec__', 'abs', 'all', 'any', 'ascii', 'bin', 'bool', 'breakpoint', 'bytearray', 'bytes', 'callable', 'chr', 'classmethod', 'compile', 'complex', 'copyright', 'credits', 'delattr', 'dict', 'dir', 'divmod', 'enumerate', 'eval', 'exec', 'exit', 'filter', 'float', 'format', 'frozenset', 'getattr', 'globals', 'hasattr', 'hash', 'help', 'hex', 'id', 'input', 'int', 'isinstance', 'issubclass', 'iter', 'len', 'license', 'list', 'locals', 'map', 'max', 'memoryview', 'min', 'next', 'object', 'oct', 'open', 'ord', 'pow', 'print', 'property', 'quit', 'range', 'repr', 'reversed', 'round', 'set', 'setattr', 'slice', 'sorted', 'staticmethod', 'str', 'sum', 'super', 'tuple', 'type', 'vars', 'zip']
+```
+
+前一半是内置异常，后一半是内置函数，两种方式引用一个内置函数：
+
+```
+>>> zip
+<class 'zip'>
+>>> builtins.zip
+<class 'zip'>
+```
+
+第二种方式在更复杂的任务中是很有用的，
+
+由于LEGB查找流程，会使它找到第一处变量名的地方生效
+
+同时低层的作用域变量名会覆盖高层的作用域变量，全局变量有可能覆盖内置的变量名
+
+#### global语句
+
+__把函数内部的变量变为全局变量，不管这个变量是否在之前出现__
+
+```python
+def test():
+    global aaa
+    aaa = 9
+    print('ok',aaa)
+test()
+> ok 9
+
+aaa = 0
+def test():
+    global aaa
+    aaa = 9
+    print('ok',aaa)
+test()
+> ok 9
+```
+
+
+
+命名空间的声明：告诉python打算生成一个或多个全局变量名
+
+- 位于模块文件内部的顶层的变量名
+- 如果在函数内被赋值的话，必须经过声明
+- 全局变量在函数内部可以被引用
+
+global允许我们修改一个模块文件顶层的def之外的名称
+
+global语句包含了关键字global,其后跟着一个或多个由逗号分开的变量名，当函数主体被赋值或引用时，所有列出来的变量名将被映射到整个模块的作用域内
+
+```python
+X = 88
+def fun():
+    global X
+    X = 99
+fun()
+print(X)
+>99
+```
+
+##### 最小化全局变量
+
+将本地变量变为全局变量会引发一些软件工程问题：
+
+```
+X = 99
+def fun1():
+    global X
+    X = 88
+
+def fun2():
+    global X
+    X = 77
+```
+
+如果不确定引用的时间，X的值是多少是个毫无意义的问题
+
+在不熟悉编程的情况下，最好避免使用全局变量
+
+##### 最小化文件间的修改
+
+尽管跨文件变量在python中是可以修改的，这会让两个文件有过强的相关性，会导致代码不灵活，容易出bug
+
+```python
+# first.py
+X = 99
+# second.py
+import first
+first.X = 88
+```
+
+##### 其他访问全局变量的方法
+
+由于全局变量构成了一个被导入的对象的属性，我们能够通过使用导入嵌入的模块，并对其属性进行赋值来仿造出一个global语句
+
+```python
+var = 99
+
+def local():
+	var = 0
+
+def glob1():
+	global var
+	# change global var
+	var += 1
+
+def glob2():
+	var = 0
+	import thismod
+	thismod.var += 1
+
+def glob3():
+	var = 0
+	import sys
+	glob = sys.modules['thismod']
+	glob.var += 1
+	return var
+
+def test():
+	print(var)
+	local();glob1();glob2();glob3()
+	print(var)
+```
+
+全局变量于模块的属性是等效的，global 允许我们修改模块中的名称
+
+##### 作用域和嵌套函数
+
+LEGB中给Ｅ包含了任意嵌套函数内部的本地作用域（静态嵌套作用域）
+
+> 一个引用首先在本地（函数内）作用域查找变量，之后会在嵌套了的函数中的本地作用域，由内到外，之后查找当前的全局作用域(模块文件)，最后再内置作用域，__全局声明将会直接从全局作用域进行搜索__
+
+```python
+x = 99
+
+def f1():
+	x = 88
+	def f2():
+		print(x)
+	# f2是f1本地作用域中的变量，f2是一个临时函数
+	f2()
+
+f1()
+> 88
+
+# 嵌套作用域的查找在嵌套函数已经返回后也是有效的
+def f1():
+	x = 88
+	def f2():
+		print(x)
+	return f2
+action= f1()
+action()
+>88
+```
+
+f2的函数的调用是在f1运行后发生的，f2记住了在f1中嵌套作用域中的x,尽管f1已经不处于激活状态
+
+##### 工厂函数
+
+闭包（closure）有时也叫工厂函数——==一个能记住嵌套作用域的变量值的函数==，尽管那个作用域或许已经不存在了。
+
+尽管类是最适合用作记忆状态的，因为它通过属性赋值让这个过程变得很明了，工厂函数也提供了替代方案
+
+```python
+def maker(N):
+    def action(x):
+        return x**N
+    return action
+f = maker(2)
+f
+><function __main__.maker.<locals>.action(x)>
+f(3)
+>9
+f(4)
+>16
+```
+
+内嵌函数记住了整数2，即变量N的值，尽管调用执行f时maker已经返回退出，实际上本地作用域内的N被==作为执行的状态信息保留了下来==
+
+```python
+g = maker(3)
+g(3)
+>27
+```
+
+对一个工厂函数的每次调用，都得到了自己的状态信息的集合，我们赋给g的函数记住了3，f记住了2，每个函数都有自己的状态信息由maker中的变量N保持
+
+嵌套的作用域常常被lambda函数创建表达式使用
+
+嵌套作用域和lambda
+
+lambda是一个表达式
+
+尽管对于def本身来说，嵌套作用域很少用，但是当开始编写lambda表达式时，就要注意了，lambda引入了新的本地作用域
+
+```python
+def fun():
+    x = 4
+    action = (lambda n:x ** n)
+    return action
+
+a = fun()
+a(2)
+>16
+```
+
+##### 作用域与带有循环变量的默认参数相比较
+
+```python
+def makeAction():
+    acts = []
+    for i in range(5):
+        acts.append(lambda x: i ** x)
+    return acts
+acts = makeAction()
+acts
+>[<function __main__.makeAction.<locals>.<lambda>(x)>,
+ <function __main__.makeAction.<locals>.<lambda>(x)>,
+ <function __main__.makeAction.<locals>.<lambda>(x)>,
+ <function __main__.makeAction.<locals>.<lambda>(x)>,
+ <function __main__.makeAction.<locals>.<lambda>(x)>]
+
+acts[0](2)
+>16
+acts[3](2)
+>16
+```
+
+如果lambda或def在函数中定义，嵌套在一个循环中，并且嵌套的函数引用了一个上层作用域的变量，该变量被循环所改变，所有在这个循环中产生的函数将会有相同的值——==在最后一次循环完成时被引用的变量==
+
+这是在嵌套作用域的值和默认参数方面遗留的一种仍需解释清楚的情况，而不是引用所在嵌套作用域的值
+
+也就是说，为了让这类代码能==工作==，必须==使用默认参数把当前的值传递给嵌套作用域的变量==，==默认参数是在嵌套函数创建时评估的（而不是在调用时），每个函数记住了自己的变量i的值==
+
+```python
+def makeAction():
+    acts = []
+    for i in range(5):
+        acts.append(lambda x, i=i: i ** x)
+    return acts
+
+f = makeAction()
+f[0](2)
+>0
+f[4](2)
+>16
+```
+
+##### 任意作用域的嵌套
+
+作用域可以做任意的嵌套，但是只有内嵌的函数（而不是类）会被搜索
+
+```python
+def f1():
+    x = 99
+    def f2():
+        def f3():
+            print(x)
+        f3()
+    f2()
+f1()
+>99
+```
+
+python 将会在所有内嵌的def中搜索本地作用域，从内至外，在引用过函数的本地作用域之后，并在搜索模块的全局作用域之前进行这一过程
+
+#### nonlocal 语句
+
+nonlocal时global的近亲，声明了将要在嵌套作用域中修改的名称，nonlocal 应用于==一个嵌套的函数作用域中的一个名称==，而不是所有def之外的全局模块作用域
+
+声明nonlocal的时候，它必须已经存在于该嵌套函数作用域中——它可能只存在于一个嵌套的函数中，并且不能由一个嵌套的def中的第一次赋值创建
+
+##### nonlocal 基础
+
+python3新引入的，它只在一个函数内由意义
+
+```
+def fun():
+    nonlocal name1,name2,...
+```
+
+##### nonlocal 应用
+
+```python
+# tester构建并返回nested函数，以便随后使用
+def tester(start):
+    state = start
+    def nested(label):
+        print(label, state)
+    return nested
+
+F = tester(0)
+F('spam')
+```
+
+默认情况下，不允许修改嵌套的def作用域中的名称，修改会报错
+
+```python
+def tester(start):
+    state = start
+    def nested(label):
+        print(label,state)
+        # 尝试修改嵌套作用域变量
+        state += 1
+    return nested
+F = tester(0)
+F('spam')
+>UnboundLocalError: local variable 'state' referenced before assignment(在赋值前引用)
+```
+
+##### 使用nonlocal修改
+
+我们在nested中把tester作用域中的state声明为一个nonlocal,我们就可以在nested函数中修改它了，尽管我们调用返回的nested函数时tester已经返回退出，这也是有效的
+
+```python
+def tester(start):
+    state = start
+    def nested(label):
+        nonlocal state
+        print(label,state)
+        # 修改嵌套作用域变量
+        state += 1
+    return nested
+F = tester(0)
+F('spam')
+> spam 0
+F('adam')
+> adam 1
+```
+
+##### 边界情况
+
+当执行nonlocal语句时，==nonlocal名称必须已经在一个嵌套的def作用域中赋值过==，否则会报错
+
+```python
+def tester(start):
+    def nested(label):
+        nonlocal state
+        print(label,state)
+        # 修改嵌套作用域变量
+        state += 1
+    return nested
+F = tester(0)
+F('spam')
+> SyntaxError: no binding for nonlocal 'state' found
+```
+
+nonlocal限制作用域查找仅为嵌套的def,nonlocal不会在嵌套的模块的全局作用域或所有def之外的内置作用域中查找（即使已经有了这些作用域）
+
+```python
+state = 11
+def tester(start):
+    def nested(label):
+        nonlocal state
+        print(label,state)
+        # 修改嵌套作用域变量
+        state += 1
+    return nested
+F = tester(0)
+F('spam')
+> SyntaxError: no binding for nonlocal 'state' found
+```
+
+##### 为什么使用nonlocal
+
+python中有不同的方法来“记住”跨函数和方法的信息，尽管都有利有弊，对于嵌套的作用域引用，nonlocal起到了改进作用——nonlocal语句允许在内存中保持可变状态的多个副本，并且解决了在类无法保证的情况下的简单状态保持
+
+每次调用都创建了可变信息的一个小小的自包含包，可变信息的名称不会与程序的其他部分产生冲突
+
+##### 与全局共享状态
+
+python2.6中实现nonlocal效果的一种通常做法是直接把状态移出全局作用域（模块的嵌套）
+
+```python
+def tester(start):
+    global state
+    state = start
+    def nested(label):
+        global state
+        print(label, state)
+        state += 1
+    return nested
+
+F = tester(0)
+F('spam')
+> spam 0
+F('abc')
+>abc 1
+F('eee')
+>eee 2
+
+FF = tester(10)
+FF('adam')
+>adam 10
+F('ham')
+>ham 11
+```
+
+代码是有效的，需要在两个函数中都有global声明，问题是只考虑了模块作用域中状态信息的单个共享副本，如果我们再次调用terster,将会重置模块的状态变量，以至于前面的调用状态被覆盖
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+### 
 
 ### 第十八章_参数
 
