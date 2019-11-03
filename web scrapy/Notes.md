@@ -300,8 +300,107 @@ Python 2 中，有 urllib 和 urllib2 两个库来实现请求的发送。 而�
   - error： 异常处理模块，如果出现请求错误， 我们可以捕获这些异常，然后进行重试或其他操 作以保证程序不会意外终止。
   - parse： 一个工具模块，提供了许多 URL 处理方法，比如拆分、解析、 合并等
   - robotparser：主要是用来识别网站的 robots.txt 文件，然后判断哪些网站可以爬，哪些网站不 可以爬，它其实用得比较少
-
 - 发送请求
+  - urlopen()
+  - 
+
+### 3.2 requests
+
+- 确保正确安装requests
+
+- 实例
+
+  ```python
+  import requests
+  
+  r = requests.get('https://baidu.com')
+  print(type(r))
+  # <class 'requests.models.Response'>
+  print(r.status_code)
+  print(type(r.text))
+  print(r.text)
+  print(r.cookies)
+  # <RequestsCookieJar[<Cookie BDORZ=27315 for .baidu.com/>]>
+  ```
+
+  响应的类型是requests.models.Response，响应体的类型是str,Cookies的类型是RequestsCookieJar
+
+- get请求
+
+  构建一个简单的get请求，链接为`'http://httpbin.org/get'`,该网站会判断客户发起的请求并返回请求信息
+
+  ```
+  r = requests.get('http://httpbin.org/get')
+  print(r.text)
+  >>>
+  {
+    "args": {},
+    "headers": {
+      "Accept": "*/*",
+      "Accept-Encoding": "gzip, deflate",
+      "Host": "httpbin.org",
+      "User-Agent": "python-requests/2.19.1"
+    },
+    "origin": "125.70.77.211, 125.70.77.211",
+    "url": "https://httpbin.org/get"
+  }
+  ```
+
+  发起的get请求，返回结果中包含请求头，url,ip等信息
+
+  对于get请求，如果要附加额外的信息，一般有两种方式：
+
+  - 之间附加到链接中`r = requests.get('http://httpbin.org/get?name=adam&age=22')`
+
+  - 参数方式添加
+
+    ```
+    data={
+        'name':'adam',
+        'age':22
+    }
+    r = request.get('http://httpbin.org/get',params=data)
+    print(r.text)
+    >>>
+    {
+      "args": {
+        "age": "22", 
+        "name": "adam"
+      }, 
+      "headers": {
+        "Accept": "*/*", 
+        "Accept-Encoding": "gzip, deflate", 
+        "Host": "httpbin.org", 
+        "User-Agent": "python-requests/2.19.1"
+      }, 
+      "origin": "125.70.77.211, 125.70.77.211", 
+      "url": "https://httpbin.org/get?name=adam&age=22"
+    }
+    ```
+
+    可以看到链接被自动构造成了之前的格式
+
+    网页返回的实际上是str类型，是json格式的，如果要得到字典格式，可以使用json方法
+
+    返回结果就是字典格式（如果返回结果不是json格式，就会出现json.decoder.JSONDecodeError异常）
+
+    ```
+    r.json()
+    >>>
+    {'args': {'age': '22', 'name': 'adam'},
+     'headers': {'Accept': '*/*',
+      'Accept-Encoding': 'gzip, deflate',
+      'Host': 'httpbin.org',
+      'User-Agent': 'python-requests/2.19.1'},
+     'origin': '125.70.77.211, 125.70.77.211',
+     'url': 'https://httpbin.org/get?name=adam&age=22'}
+     
+    type(r.json())
+    >>>
+    dict
+    ```
+
+- 抓取网页
 
   
 
