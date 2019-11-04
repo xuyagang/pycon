@@ -4014,7 +4014,101 @@ dataframe的列名 Genus 被用作了图例的标题
 
 - seaborn的使用
 
+  ```python
+  import seaborn as sns
   
+  # 加载小费数据集
+  tips = pd.read_csv('./tips.csv')
+  # 计算小费百分比
+  tips['tip_pct'] = tips['tip']/(tips['total_bill']-tips['tip'])
+  tips.head()
+  >>>
+  total_bill	tip	smoker	day	time	size	tip_pct
+  0	16.99	1.01	No	Sun	Dinner	2	0.063204
+  1	10.34	1.66	No	Sun	Dinner	3	0.191244
+  2	21.01	3.50	No	Sun	Dinner	3	0.199886
+  3	23.68	3.31	No	Sun	Dinner	2	0.162494
+  4	24.59	3.61	No	Sun	Dinner	4	0.172069
+  
+  # 绘图
+  sns.barplot(x='tip_pct', y='day', data=tips, orient='h')
+  ```
+
+![031](D:\project\pycon\DA\img\031.JPG)
+
+```python
+# You can switch between different plot appearances using seaborn.set
+sns.set(style='whitegrid')
+
+
+# seaborn.barplot has a hue option that enables us to split by an additional categorical value
+sns.barplot(x='tip_pct', y='day', hue='time', data=tips, orient='h')
+```
+
+![032](D:\project\pycon\DA\img\032.JPG)
+
+#### Histograms and Density Plots (直方图和密度图)
+
+==直方图==是一种可以对值频率进行离散化显示的柱状图，数据点被拆分到离散的、间隔均匀的面元中，绘制的是各面元中数据点的数量
+
+```python
+tips
+>>>
+total_bill	tip	smoker	day	time	size	tip_pct
+0	16.99	1.01	No	Sun	Dinner	2	0.063204
+1	10.34	1.66	No	Sun	Dinner	3	0.191244
+2	21.01	3.50	No	Sun	Dinner	3	0.199886
+3	23.68	3.31	No	Sun	Dinner	2	0.162494
+4	24.59	3.61	No	Sun	Dinner	4	0.172069
+5	25.29	4.71	No	Sun	Dinner	4	0.228863
+6	8.77	2.00	No	Sun	Dinner	2	0.295421
+```
+
+```
+tips['tip_pct'] = tips['tip']/tips['total_bill']
+tips['tip_pct'].hist(bins=50)
+```
+
+![033](D:\project\pycon\DA\img\033.JPG)
+
+==密度图==是通过计算“__可能会产生观测数据的连续概率分布的估计__”而产生的，一般的过程是将该分布近似为一组核（诸如正态分布之类的较为简单的分布）
+
+因此密度图也被称为KDE图（Kernel Density Estimate 核密度估计）
+
+调用plot时加上kind='kde'即可生成一张密度图（标准混合正态分布KDE）
+
+```python
+tips['tip_pct'].plot(kind='kde')
+```
+
+![034](D:\project\pycon\DA\img\034.JPG)
+
+这两种图常常会被画在一起，直方图以规格化形式给出，然后再在其上绘制和密度估计
+
+```python
+# (Gaussian) distribution
+# 参数1 Mean ("centre") of the distribution.
+# 参数2 Standard deviation (spread or "width") of the distribution
+
+comp1 = np.random.normal(0,1,size=200)
+comp2 = np.random.normal(10,2,size=200)
+
+values = pd.Series(np.concatenate([comp1,comp2]))
+values.hist(bins=100,alpha=0.3,color='k',normed=True)
+values.plot(kind='kde',style='k--')
+```
+
+![035](D:\project\pycon\DA\img\035.JPG)
+
+```
+pd.Series.hist(self, by=None, ax=None, grid=True, xlabelsize=None, xrot=None, ylabelsize=None, yrot=None, figsize=None, bins=10, **kwds)
+```
+
+
+
+
+
+
 
 
 
