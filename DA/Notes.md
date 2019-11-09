@@ -4098,35 +4098,101 @@ values.hist(bins=100,alpha=0.3,color='k',normed=True)
 values.plot(kind='kde',style='k--')
 ```
 
-![035](D:\project\pycon\DA\img\035.JPG)
+s![035](D:\project\pycon\DA\img\035.JPG)
 
 ```
 pd.Series.hist(self, by=None, ax=None, grid=True, xlabelsize=None, xrot=None, ylabelsize=None, yrot=None, figsize=None, bins=10, **kwds)
 ```
 
+#### Scatter or Point Plots （散布图）
+
+散布图是观察两个一维数据序列之间的关系的有效方法 matplotlib的scatter方法是绘制散布图的主要方法
+
+```python
+# 加载statsmodels项目的macrodata 数据集，然后计算对数差
+macro = pd.read_csv('./macrodata.csv')
+macro.head()
+>>>
+year	quarter	realgdp	realcons	realinv	realgovt	realdpi	cpi	m1	tbilrate	unemp	pop	infl	realint
+0	1959.0	1.0	2710.349	1707.4	286.898	470.045	1886.9	28.98	139.7	2.82	5.8	177.146	0.00	0.00
+1	1959.0	2.0	2778.801	1733.7	310.859	481.301	1919.7	29.15	141.7	3.08	5.1	177.830	2.34	0.74
+2	1959.0	3.0	2775.488	1751.8	289.226	491.260	1916.4	29.35	140.5	3.82	5.3	178.657	2.74	1.09
+3	1959.0	4.0	2785.204	1753.7	299.356	484.052	1931.3	29.37	140.0	4.33	5.6	179.386	0.27	4.06
+4	1960.0	1.0	2847.699	1770.5	331.722	462.199	1955.5	29.54	139.6	3.50	5.2	180.007	2.31	1.19
 
 
+data = macro[['cpi', 'm1','tbilrate', 'unemp']]
+trans_data = np.log(data).diff().dropna()
+trans_data[-5:]
+>>>
+cpi	m1	tbilrate	unemp
+198	-0.007904	0.045361	-0.396881	0.105361
+199	-0.021979	0.066753	-2.277267	0.139762
+200	0.002340	0.010286	0.606136	0.160343
+201	0.008419	0.037461	-0.200671	0.127339
+202	0.008894	0.012202	-0.405465	0.042560
 
+plt.scatter(trans_data['m1'],trans_data['unemp'])
+plt.title('Changes in log %s vs.log %s' %('m1','unemp'))
+```
 
-
-
-
-
-
-
-
-
-
+![036](D:\project\pycon\DA\img\036.JPG)
 
 ### 绘制地图：图形化显示海地地震危机数据
 
-### python图形化工具生态系统
+Ushahidi是一家非营利软件公司，人们可以通过短信向其提供自然灾害和地缘政治事件信息，数据会发布在他们的网站（http://communty.ushahidi.com/research/datasets/）上以供分析与图形化
+
+- [ ] 下面用pandas来实现==后续研究==
+
+```
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
 ## 第九章 数据聚合与分组运算
 
 ### GroupBy技术
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 ### 数据聚合
 

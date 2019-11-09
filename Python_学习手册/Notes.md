@@ -3946,7 +3946,7 @@ def person(name, age, *, city='Beijing', job):
 ##### 小结：
 
 - 默认参数一定要用不可变对象，如果是可变对象，程序运行时会有逻辑错误
-- `*args`是可变参数，args接收的是一个tuple
+- ==`*args`是可变参数==，args接收的是一个tuple
   - 可变参数既可以直接传入：`func(1, 2, 3)`，又可以先组装list或tuple，再通过`*args`传入：`func(*(1, 2, 3))`；
 - `**kw`是关键字参数，kw接收的是一个dict
   - 关键字参数既可以直接传入：`func(a=1, b=2)`，又可以先组装dict，再通过`**kw`传入：`func(**{'a': 1, 'b': 2})`
@@ -4552,7 +4552,7 @@ g.send(77)
 >2
 ```
 
-pg505
+- send vs next 总结：
 
 
 
@@ -4560,15 +4560,603 @@ pg505
 
 
 
+#### 生成器表达式：迭代器遇到列表解析
+
+迭代器和列表解析形成了一个新的特性：生成器表达式
+
+生成器表达式类似于列表解析，但是他们是在圆括号中而不是在方括号中
+
+```
+# 列表解析
+[x ** 2 for x in range(4)]
+>>>
+[0, 1, 4, 9]
+# 生成器表达式
+(x ** 2 for x in range(4))
+>>>
+<generator object <genexpr> at 0x0000028ABD75D390>
+```
+
+生成器表达式不是在内存中构建结果，而是返回一个生成器对象，该对象支持迭代协议
+
+我们不会机械的使用next,因为for循环会自动触发
+
+==迭代语境：==会自动除法迭代的内置函数
+
+- sum、map、sorted、any、all、list ...
+
+如果生成器表达式是在其他的括号内，就像在那些函数调用之中，这种情况下，生成器自身的括号就不必要
+
+````python
+sum(s**2 for s in range(4))
+>>>
+14
+sorted(x**2 for x in range(4))
+>>>
+[0, 1, 4, 9]
+# 有额外参数时，需要加括号
+sorted((x**2 for x in range(4)),reverse=True)
+>>>
+[0, 1, 4, 9]
+````
+
+生成器表达式可以认为是对内存空间的优化，不会一次构造出整个列表，实际运行可能稍慢一些，对于非常大的结果集合的运算时最优的选择
+
+#### 生成器函数 VS　生成器表达式
+
+同样的迭代，往往可以用一个生成器函数或生成器表达式编写
+
+等价的生成器函数略微多一些代码，但可以编写更多的逻辑和更多的状态信息
+
+生成器是单次迭代器
+
+#### 生成器是单迭代器对象
+
+生成器函数和生成器表达式自身都是迭代器，只支持==一次活跃迭代==
+
+一个生成器的迭代器是生成器本身（在一个生成器上调用iter没有任何效果）
+
+```python
+G = (c * 4 for c in 'sapm')
+iter(G) is G
+>>>
+True
+
+# 手动的使用多个迭代器来迭代结果流，会指向相同的位置
+G = (c * 4 for c in 'spam')
+I1 = iter(G)
+next(I1)
+>>>
+'ssss'
+next(I1)
+>>>
+'pppp'
+I2 = iter(G)
+next(I2)
+>>>
+'aaaa'
+next(I1)
+>>>
+'mmmm'
+next(I2)
+>>>
+StopIteration                             Traceback (most recent call last)
+```
+
+一旦任何迭代器运行到完成，所有的迭代器都将用尽，必须产生一个新的生成器以再次开始
+
+```python
+I3 = iter(G)
+next(I3)
+>>>
+StopIteration                             Traceback (most recent call last)
+
+I3 = iter(c*4 for c in 'spam')
+next(I3)
+>>>
+'ssss'
+```
+
+对于生成器函数来说也是如此，只支持一个活跃的生成器并且在一次迭代后用尽
+
+```python
+def timesfour(s):
+    for c in s:
+        yield c*4
+
+G = timesfour('spam')
+iter(G) is G
+>>>
+True
+I1,I2 = iter(G),iter(G)
+next(I1)
+>>>'ssss'
+next(I1)
+>>>'pppp'
+next(I2)
+>>>'aaaa'
+```
+
+对于某些内置类型，他们支持多个迭代器并且在一个活动迭代器中传递并反映他们的原处修改
+
+```python
+L = [1,2,3,4]
+I1,I2 = iter(L),iter(L)
+I1 is I2
+>>> False
+next(I1)
+>>>1
+next(I1)
+>>>2
+next(I2)
+>>>1
+del L[2:]
+next(I1)
+>>>StopIteration                             Traceback (most recent call last)
+next(I2)
+>>>2
+next(I2)
+>>>StopIteration                             Traceback (most recent call last)
+```
+
+#### 用迭代工具模拟zip和map
+
+```
+zip([iterable, ...])
+# 输入一个或多个迭代器
+# 返回元组列表
+```
+
+```
+list(zip([1,2,3],[2,3,4,5]))
+>>>
+[(1,2),(2,3),(3,4)]
+
+list(zip([1,2,3]))
+>>>
+[(1,), (2,), (3,)]
+list(map(pow,[1,2,3],[1,2,3]))
+>>>[1, 4, 27]
+[((1,),), ((2,),), ((3,),)]
+```
+
+##### 编写自己的map（func, ...）
+
+```python
+def my_map(func,*seqs):
+    result = []
+    for args in zip(*seqs):
+        result.append(func(*args))
+    return result
+a = my_map(pow,[1,2,3],[4,5,6])
+>>>
+[1, 32, 729]
+my_map(abs,[1,-2,-3,4])
+>>>
+[1, 2, 3, 4]
+```
+
+这个版本依赖于特殊的 * args 参数传递，==它收集多个序列（可迭代对象）参数==，将其作为zip参数  解包  以便组合，然后成对的zip结果解包作为参数传入到函数
+
+zip是map中的一个基本嵌套操作
+
+利用列表解析实现更精简的my_map：(运行的更快，之前的map一次性构建结果列表，对于较大的列表，可能浪费内存)
+
+```python
+def my_map(func,*seqs):
+    return [func(*args) for args in zip(*seqs)]
+print(my_map(pow,[1,2,3],[4,5,6]))
+print(my_map(abs,[1,-2,-3,4]))
+>>>
+[1, 32, 729]
+[1, 2, 3, 4]
+```
+
+- 利用生成器函数和表达式实现
+
+  ```python
+  # 使用yeild
+  def my_map(func,*seqs):
+      for args in *seqs:
+          yield func(*args)
+  a = my_map(pow,[1,2,3],[4,5,6])
+  a
+  >>>
+  <generator object my_map at 0x0000023138AB46D8>
+  
+  # 返回一个生成器表达式
+  def my_map(func,*seqs):
+      return (func(*args) for args in zip(*seqs))
+  a = my_map(pow,[1,2,3],[4,5,6])
+  a
+  >>>
+  <generator object my_map.<locals>.<genexpr> at 0x0000023138B51F48>
+  ```
+
+  ##### 编写自己的zip(...)和map(None, ...)
+
+   ```python
+  def my_zip(*seqs):
+      seqs = [list(s) for s in seqs]
+      res = []
+      # 测试序列的真假，以最短的列表生成结果
+      while all(seqs):
+          res.append(tuple(s.pop(0) for s in seqs))
+      return res
+  print(my_zip([1,2,3],[4,5,6]))
+  >>>
+  [(1, 4), (2, 5), (3, 6)]
+   ```
+
+  自带的map会生成最短的匹配
+
+  ```
+  list(map(pow,[1,2,3],[2,3]))
+  >>> [1, 8]
+  ```
+
+  编写会自动填充的map
+
+  ```python
+  def mypadmap(*seqs,pad=None):
+      seqs = [list(s) for s in seqs] 
+      res = []
+      # 判断是否有序列为真，以便进行填充
+      while any(seqs):
+          res.append(tuple(s.pop(0) if s else pad for s in seqs))
+  mypadmap((1,2,3),[4,5,6])
+  >>>
+  [(1, 4), (2, 5), (3, 6)]
+  ```
+
+  注意all和any函数的应用，如果一个可迭代对象中的所有元素为True或False,分别返回True和False,用来停止循环
+
+  使用yield将他们转换为生成器以便他们每个都是每次返回结果中的一项
+
+  ```python
+  # myzip
+  def my_zip(*seqs):
+      # 将序列转为 列表的列表
+      seqs = [list(s) for s in seqs]
+      # 设置条件判断以终止循环
+      while all(seqs):
+          yield tuple(s.pop(0) for s in seqs)
+  # 使用list使其显示
+  list（my_zip((1,2,3),[4,5,6])）
+  >>>
+  [(1, 4), (2, 5), (3, 6)]
+  
+  # mypadmap
+  # 嵌套的列表解析使用了两个层级的延迟计算——python的range是一个可迭代对象
+  def mypadmap(*seqs,pad=None):
+      # 计算最大的长度
+      maxlen = max(len(seq) for seq in seqs)
+      index = range(maxlen)
+      return [tuple((s[i] if len(s) > i else pad) for s in seqs) for i in index]
+  
+  mypadmap([1,2,3],[4,5,6])
+  >>>
+  [(1, 4), (2, 5), (3, 6)]
+  ```
+
+#### 内置类型和类中的值生成
+
+字典中拥有每次迭代中产生键的迭代器
+
+```python
+D = {'a':1,'b':2,'c':3}
+for i in D:
+    print(i)
+>>>
+a
+b
+c
+```
+
+文件迭代器中，python简单的载入了一个文件的行
+
+```python
+for line in open('temp.txt'):
+    print(line)
+```
+
+### python3 解析语法概括
+
+```python
+# zip可针对多个序列操作
+list(zip([1,2,3],[4,5,6],[7,8,9]))
+>>>
+[(1, 4, 7), (2, 5, 8), (3, 6, 9)]
+```
 
 
 
+已经学习了列表解析和生成器，还有两种可用的解析表达式：集合解析和字典解析
 
+- 对于集合，新的常量形式{1，4，3}等同于set([1,4,3])
 
+  集合解析语法{f(x) for x in s if P(x)} 等价于 set(f(x) for x in s if P(x))
 
+- 对于字典，{key:val for key,val in zip(keys,vals)}  等价于 dict(zip(keys,vals))
 
+  {x:f(x) for x in items} 等价于 dict((x,f(x)) for x in items)
 
+```python
+# list comprehension
+[x*x for x in range(10)]
+# generator expression
+(x*x for x in range(10))
+# set comprehension
+{x*x for x in range(10)}
+# dictionary comprehension
+{x:x*x for x in range(10)}
+```
 
+#### 集合解析和字典解析
+
+对于列表解析总是可以手动构建
+
+```python
+res = set()
+for x in range(10):
+    res.add(x*x)
+    
+res = {}
+for x in range(10):
+    # 向字典中添加键值对
+    res[x] = x*x
+```
+
+尽管这两种方式都接受迭代器，他们没有根据需要产生结果的概念——两种形式都是一次构建所有对象
+
+如果要根据需求产生键值，生成器表达式更合适
+
+```python
+G = ((x,x*x) for x in range(10))
+```
+
+#### 针对集合和字典的扩展语法
+
+```python
+[x + y for x in [1,2,3] for y in [4,5,6]]
+```
+
+### 对迭代的方法计时
+
+#### 对模块计时
+
+```python
+import time
+reps = 1000
+repslist = range(reps)
+
+def timer(func,*pargs,**kargs):
+    start = time.clock()
+    for i in resplist:
+        ret = func(*pargs,**kargs)
+    slapsed = time.clock()-start
+    return (slapsed,ret)
+```
+
+##### 计时脚本
+
+```python
+# timer.py
+import time
+
+reps = 1000
+repslist = range(reps)
+
+def timer(func,*pargs, **kargs):
+    start = time.clock()
+    for i in repslist:
+        ret = func(*pargs,**kargs)
+    elapsed = time.clock() - start
+    return (elapsed, ret)
+# 生成耗时和结果
+```
+
+计时测试
+
+```python
+import sys,timer
+reps = 10000
+repslist = range(reps)
+
+def forloop():
+    res=[]
+    for x in repslist:
+        res.append(abs(x))
+    return res
+
+def listComp():
+    return [abs(x) for x in repslist]
+
+def mapCall():
+    return list(map(abs,repslist))
+
+def genExpr():
+    return list(abs(x) for x in repslist)
+
+def genFunc():
+    def gen():
+        for x in repslist:
+            yield abs(x)
+    return list(gen())
+
+print(sys.version)
+for test in (forloop, listComp, mapCall, genExpr, genFunc):
+    elapsed, result = timer.timer(test)
+    print('-'*33)
+    print('%-9s: %.5f => [%s ... %s]' % (test.__name__,elapsed,result[0],result[-1]))
+```
+
+```
+3.7.0 (default, Jun 28 2018, 08:04:48) [MSC v.1912 64 bit (AMD64)]
+---------------------------------
+forloop  : 1.29046 => [0 ... 9999]
+---------------------------------
+listComp : 0.80302 => [0 ... 9999]
+---------------------------------
+mapCall  : 0.36476 => [0 ... 9999]
+---------------------------------
+genExpr  : 0.92997 => [0 ... 9999]
+---------------------------------
+genFunc  : 1.14907 => [0 ... 9999]
+```
+
+### 函数陷阱
+
+#### 本地变量是静态检验的
+
+python定义的在一个函数中进行分配的变量名是默认为本地变量，存在于函数的作用域并只在函数运行时存在
+
+python是静态检验本地变量的
+
+- 没有在函数中的变量会在整个模块中查找
+
+  ```python
+  x = 99
+  def selector():
+      print(x)
+      
+  selector()
+  >>>
+  99
+  ```
+
+- 在函数的变量引用之后增加一个赋值语句，要==重点注意==
+
+  ````python
+  x = 99
+  def selector():
+      print(x)
+      x = 88
+  >>>
+  UnboundLocalError: local variable 'x' referenced before assignment
+  ````
+
+  __得到一个未定义变量名的错误__：python对代码编译时，看到了x的赋值语句，这决定了x将会在函数的任一地方都将时本地变量
+
+  但当函数运行时，print执行时赋值语句并没有发生，python会告诉你正在使用一个未定义的变量
+
+  >  根据其变量名规则，本地变量x是在其被赋值前调用了
+
+  __任何在函数体内的赋值将会使其成为一个本地变量名__
+
+  import 、=、嵌套def、嵌套类等，都会受这种行为的影响
+
+  ==原因==：==在函数中被赋值的变量名在函数内部是当作本地变量来对待，而不是仅仅在赋值以后的语句中才被当作本地变量==
+
+  ```python
+  # 如果需要打印全局变量x，需要一个global语句声明
+  x = 99
+  def selector():
+      global x
+      print(x)
+      x = 88
+  selector()
+  print(x)
+  >>>
+  99
+  88
+  ```
+
+  这样函数内的赋值语句会改变全局变量x，而不是一个本地变量
+
+  函数中不可能同时使用同一个简单变量名的本地变量和全局变量，如果真的==希望打印全局变量，并在之后设置一个有着相同变量名的本地变量，导入上层的模块，并使用模块的属性标记来获得其全局变量==
+
+  ```python
+  x = 99
+  def selector():
+      # 导入上层模块
+      import __main__
+      # 通过属性标记获取全局x
+      print(__main__.x)
+      # 定义本地x
+      x = 88
+      print(x)
+  selector()
+  print(x)
+  >>>
+  99
+  88
+  99
+  ```
+
+#### 默认和可变对象
+
+默认参数是在==def语句运行时==评估并保存的，而不是在函数调用时
+
+从内部来讲，python会将每个默认参数保存为一个对象，附加在函数上
+
+__必须对修改可变的默认参数十分小心__
+
+```python
+# 函数使用了一个默认参数，并在每次调用时都对它进行了改变
+def saver(x=[]):
+    x.append(1)
+    print(x)
+saver([2])
+saver()
+saver()
+saver()
+>>>
+[2, 1]
+[1]
+[1, 1]
+[1, 1, 1]
+```
+
+有人把这种行为当作一种特性，因为可变类型的默认参数在函数调用之间保存了他们的状态，从某种意义上讲他们能够充当c语言中的静态本地函数变量的角色，在一定程度上，他们工作起来就像全局变量，但是他们的变量名对于函数来说是本地变量，而且不会与程序中的其他变量名发生冲突
+
+可变类型默认参数的值取决于默认对象的构建时间，在上一个例子中，其中只有一个列表对象作为默认值，这个列表对象是在def语句执行时被创建的，不会每次函数调用时都得到一个新的列表，所以每次新的元素加入后，列表会变大，对于每次调用，他都没有重置为空列表
+
+`None or []  语句返回  []`
+
+```python
+def saver(x=None):
+    if x is None:
+        # run code to make a new list
+        x = []
+    x.append(1)
+    print(x)
+saver([])
+>>>
+[1]
+```
+
+#### 没有return的函数
+
+当一个函数没有精确的返回值的时候，函数在控制权从函数函数主体脱离时，函数将会退出
+
+所有的函数都返回了一个值，如果没有return，函数将自动返回None对象
+
+```python
+# no return is a None return
+def no_return(x):
+    print(x)
+   
+x = no_return(1)
+>>>1
+print(x)
+>>>
+None
+```
+
+#### 嵌套作用域的循环变量
+
+处理嵌套的循环改变了的变量时要小心
+
+### 本章小结
+
+- 方括号中的列表解析会一次性在内存中产生结果列表，当位于圆括号中时，实际上是生成器表达式，不会一次产生结果列表，返回一个生成器对象，用在迭代环境中，一次产生结果中的一个元素
+- 生成器和迭代器的关系：生成器是支持迭代协议的对象，他们有\_\_next\_\_方法（重复前进到下个元素，以及到尾端时引发例外事件），我们可以通过def,加圆括号的列表解析的生成器以及以类定义特殊方法\_\_iter\_\_来创建生成器对象
+- 如何分辨函数是否为生成器函数：yield语句会把函数变为生成器，调用时产生生成器对象，支持迭代协议
+- map和列表解析：两者都会收集对序列或其他可迭代对象中每个元素应用运算后的结果，创建新的列表
+  - map会对每个每个元素应用函数，而列表解析则是应用表达式（更通用）
+
+pg533
 
 
 
