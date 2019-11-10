@@ -4176,13 +4176,131 @@ Ushahidi是一家非营利软件公司，人们可以通过短信向其提供自
 
 ### GroupBy技术
 
+一个用于表示分组运算的术语“split-apply-combine"(拆分-应用-合并)
 
+分组运算的第一个阶段，pandas对象中的数据会根据提供的键被拆分（split）为分组，拆分操作是在对象的特定轴上执行的（dataframe可以在其行或列上进行分组），然后将一个函数应用（apply）到各个分组并产生一个新值,最后，所有这些函数的执行结果会被合并（combine）到最终的结果对象中
 
+![037](D:\project\pycon\DA\img\037.JPG)
 
+- 分组键可以有多种形式，类型不必相同
 
+  - 列表或数组，其长度与待分组的轴一样
+  - 表示dataframe某个列名的值
+  - 字典或series,给出待分组轴上的值与分组名之间的对应关系
+  - 函数，用于处理轴索引或索引中的标签
 
+  > 后三种只是快捷方式而已，最终目的仍然是产生一组用于拆分对象的值
 
+```python
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
 
+# 利用列名和数据构建dataframe
+df = pd.DataFrame({
+    'key1':['a', 'a', 'b', 'b', 'a'],
+    'key2' : ['one', 'two', 'one', 'two', 'one'],
+    'data1' : np.random.randn(5),
+    'data2' : np.random.randn(5)
+})
+df
+>>>
+	key1	key2	data1	data2
+0	a	one	-0.223888	0.114470
+1	a	two	0.624460	-1.265352
+2	b	one	0.371178	1.426521
+3	b	two	-1.663985	0.810567
+4	a	one	-0.570321	-0.005611
+```
+
+利用key1进行分组，并计算data1列的均值
+
+- 方式：访问data1,并根据key1调用groupby
+
+  ```python
+  grouped = df['data1'].groupby(df['key1'])
+  grouped
+  >>>
+  <pandas.core.groupby.groupby.SeriesGroupBy object at 0x000002AC8FF30FD0>
+  ```
+
+变量grouped是一个groupby对象，它实际上还没有进行计算，只是含有一些分组键df['key1']的中间数据
+
+简言之该对象有了对各分组执行运算的所有信息
+
+```
+grouped.mean()
+>>>
+key1
+a   -0.056583
+b   -0.646404
+Name: data1, dtype: float64
+```
+
+数据根据  分组键  进行了聚合，产生了一个新的series,其索引为key1列中的唯一值
+
+一次传入多个数组,通过多个键对数据进行分组，得到具有层次化索引的series
+
+```
+means = df['data1'].groupby([df['key1'],df['key2']]).mean()
+means
+>>>
+key1  key2
+a     one    -0.397105
+      two     0.624460
+b     one     0.371178
+      two    -1.663985
+Name: data1, dtype: float64
+```
+
+分组可以是任何长度适当的数组
+
+```
+states = np.array(['Ohio', 'California', 'California', 'Ohio', 'Ohio'])
+years = np.array([2005, 2005, 2006, 2005, 2006])
+df['data1'].groupby([states,years]).mean()
+>>>
+California  2005    0.624460
+            2006    0.371178
+Ohio        2005   -0.943936
+            2006   -0.570321
+Name: data1, dtype: float64
+```
+
+还可以将列名(可以是字符，数字等)作为分组建
+
+```
+df.groupby('key1').mean()
+>>>
+		data1	data2
+key1		
+a	-0.056583	-0.385498
+b	-0.646404	1.118544
+
+df.groupby(['key1','key2']).mean()
+>>>
+		data1	data2
+key1	key2		
+a	one	-0.397105	0.054429
+two	0.624460	-1.265352
+b	one	0.371178	1.426521
+two	-1.663985	0.810567
+```
+
+groupby进行分组时对非数据列（麻烦列）进行了排除，默认情况下所有数值都会被聚合
+
+size方法返回分组大小
+
+```
+df.groupby(['key1','key2']).size()
+>>>
+key1  key2
+a     one     2
+      two     1
+b     one     1
+      two     1
+dtype: int64
+```
 
 
 
