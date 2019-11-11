@@ -4487,23 +4487,68 @@ people.groupby([len, key_list]).min()
 
 #### 根据索引级别分组
 
+层次化索引数据集最方便的地方就在于它能够根据==索引级别==进行聚合，通过==level==关键字传入级别编号或名称
 
-
-
-
-
-
-
-
-
-
-
-
-
+```python
+columns = pd.MultiIndex.from_arrays(
+    # 第一层级
+    [['US', 'US', 'US', 'JP', 'JP'],
+    # 第二层级
+     [1, 3, 5, 1, 3]],
+    # 层级的名字集合
+    names=['cty', 'tenor'])
+columns
+>>>
+MultiIndex(levels=[['JP', 'US'], [1, 3, 5]],
+           labels=[[1, 1, 1, 0, 0], [0, 1, 2, 0, 1]],
+           names=['cty', 'tenor'])
+hier_df = pd.DataFrame(np.random.randn(4,5), columns=columns)
+hier_df
+>>>
+cty	US	JP
+tenor	1	3	5	1	3
+0	0.744874	-0.024091	-1.149179	0.267842	-1.054643
+1	-0.929076	-0.933683	-0.011677	-0.910201	0.431937
+2	0.520172	-1.494227	1.454167	0.488063	2.434893
+3	-0.055138	-0.040540	0.790086	-0.458118	-2.125981
+hier_df.groupby(level='cty', axis=1).count()
+>>>
+cty	JP	US
+0	2	3
+1	2	3
+2	2	3
+3	2	3
+```
 
 
 
 ### 数据聚合
+
+pg271
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 ### 分组级运算与转换
 
