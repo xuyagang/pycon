@@ -4302,6 +4302,197 @@ b     one     1
 dtype: int64
 ```
 
+#### 对分组进行迭代
+
+groupby对象==支持迭代==，可以产生一组二元元组，由分组名和数据块组成
+
+对于未进行计算的groupby对象，使用list操作可以让其显示结果
+
+```python
+df.groupby('key1')
+>>>
+<pandas.core.groupby.groupby.DataFrameGroupBy object at 0x000002AC92BAA2E8>
+list(df.groupby('key1'))
+>>>
+[('a',   key1 key2     data1     data2
+  0    a  one -0.223888  0.114470
+  1    a  two  0.624460 -1.265352
+  4    a  one -0.570321 -0.005611), ('b',   key1 key2     data1     data2
+  2    b  one  0.371178  1.426521
+  3    b  two -1.663985  0.810567)]
+```
+
+可以对数据片段做任何操作，一个很有用的操作是将其做成字典
+
+```python
+pieces = dict(list(df.groupby('key1')))
+pieces
+>>>
+{'a':   key1 key2     data1     data2
+ 0    a  one -0.223888  0.114470
+ 1    a  two  0.624460 -1.265352
+ 4    a  one -0.570321 -0.005611, 'b':   key1 key2     data1     data2
+ 2    b  one  0.371178  1.426521
+ 3    b  two -1.663985  0.810567}
+type(pieces['b'])
+>>>
+pandas.core.frame.DataFrame
+```
+
+groupby默认在axis=0上进行分组，通过设置可以对任何轴进行分组
+
+```
+list(df.groupby(df.dtypes,axis=1))
+>>>
+[(dtype('float64'),       data1     data2
+  0 -0.223888  0.114470
+  1  0.624460 -1.265352
+  2  0.371178  1.426521
+  3 -1.663985  0.810567
+  4 -0.570321 -0.005611), (dtype('O'),   key1 key2
+  0    a  one
+  1    a  two
+  2    b  one
+  3    b  two
+  4    a  one)]
+```
+
+#### 选取一个或一组列
+
+对于由dataFrame产生的groupby对象，如果用一个或一组列名对其进行索引，就能实现选取部分列进行聚合的目的
+
+```python
+df.groupby('key1')['data1']
+df.groupby('key1')[['data2']]
+# 以上是以下的语法糖
+df['data1'].groupby(df['key1'])
+df[['data2']].groupby(df['key1']) 
+```
+
+对于大数据集，很可能只对部分列进行聚合，对于之前数据集只求data2列的平均值并以dataframe形式得到结果
+
+```python
+df.groupby(['key1','key2'])[['data2']].mean()
+>>>
+data2
+key1	key2	
+a	one	0.054429
+two	-1.265352
+b	one	1.426521
+two	0.810567
+```
+
+这种索引操作返回的对象是一个已分组的DataFrame或Series
+
+```python
+s_grouped = df.groupby(['key1', 'key2'])['data2']
+s_grouped
+>>>
+<pandas.core.groupby.SeriesGroupBy object at 0x7faa30c78da0>
+s_grouped.mean() 
+>>>
+key1  key2
+a     one     0.054429
+      two    -1.265352
+b     one     1.426521
+      two     0.810567
+Name: data2, dtype: float64
+```
+
+#### 通过字典或Series进行分组
+
+```python
+people = pd.DataFrame(
+    np.random.randn(5,5),
+    index=['Joe', 'Steve', 'Wes', 'Jim', 'Travis'],
+    columns=['a', 'b', 'c', 'd', 'e']
+)
+people
+>>>
+a	b	c	d	e
+Joe	-1.530118	-0.355276	-1.780145	-0.060734	0.870525
+Steve	1.228132	1.974597	1.269202	0.691717	0.099211
+Wes	-0.556833	-1.178751	0.856106	0.129820	0.329898
+Jim	-1.141639	-0.019510	-0.939034	-0.369156	-0.496966
+Travis	1.149363	1.781469	-0.463331	0.280201	-0.407344
+# 插入空值  df.iloc[行，列] = np.nan
+people.iloc[2:3, [1,2]] = np.nan
+people
+>>>
+a	b	c	d	e
+Joe	-1.530118	-0.355276	-1.780145	-0.060734	0.870525
+Steve	1.228132	1.974597	1.269202	0.691717	0.099211
+Wes	-0.556833	NaN	NaN	0.129820	0.329898
+Jim	-1.141639	-0.019510	-0.939034	-0.369156	-0.496966
+Travis	1.149363	1.781469	-0.463331	0.280201	-0.407344
+
+mapping = {'a': 'red', 'b': 'red', 'c': 'blue',
+           'd': 'blue', 'e': 'red', 'f' : 'orange'} 
+by_column = people.groupby(mapping,axis=1)
+by_column.sum()
+>>>
+blue	red
+Joe	-1.840878	-1.014868
+Steve	1.960920	3.301940
+Wes	0.129820	-0.226935
+Jim	-1.308190	-1.658116
+Travis	-0.183130	2.523488
+```
+
+series作为分组键，pandas会检查series以确保其索引跟分组轴是对齐的
+
+```
+map_series = pd.Series(mapping)
+map_series
+>>>
+a       red
+b       red
+c      blue
+d      blue
+e       red
+f    orange
+dtype: object
+
+people.groupby(map_series,axis=1).sum()
+>>>
+	blue	red
+Joe	-1.840878	-1.014868
+Steve	1.960920	3.301940
+Wes	0.129820	-0.226935
+Jim	-1.308190	-1.658116
+Travis	-0.183130	2.523488
+```
+
+#### 通过函数进行分组
+
+相较与字典、series，python函数在定义分组映射关系时可以更有创意且更为抽象，任何被当作分组键的函数都会在各个索引值上被调用一次
+
+```python
+# 例如希望根据人名的长度来分组，仅仅需要传入len函数
+people.groupby(len).sum()
+>>>
+	a	b	c	d	e
+3	-3.228590	-0.374786	-2.719178	-0.300070	0.703458
+5	1.228132	1.974597	1.269202	0.691717	0.099211
+6	1.149363	1.781469	-0.463331	0.280201	-0.407344
+```
+
+将函数、列表、字典、Series混合使用也没问题，因为任何东西最终都会被转换为数组
+
+```python
+# 只需将各个项放入一个列表即可
+key_list = ['one', 'one', 'one', 'two', 'two']
+people.groupby([len, key_list]).min()
+```
+
+#### 根据索引级别分组
+
+
+
+
+
+
+
 
 
 
