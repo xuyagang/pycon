@@ -4524,7 +4524,24 @@ cty	JP	US
 
 ### 数据聚合
 
-pg271
+对于聚合指的是任何能够从数组产生标量值的数据转换
+
+许多聚合运算都有就地计算数据集统计信息的优化实现，也可以调用分组对象上定义好的方法
+
+```python
+# 利用quantile可计算series和dataframe的样本分位数
+grouped = df.groupby['key1']
+grouped['data1'].quantile(0.9)
+>>>
+key1
+a    0.454790
+b    0.167661
+Name: data1, dtype: float64
+```
+
+quantile并没有实现与groupby，是一个series方法，这里也能使用
+
+
 
 
 
