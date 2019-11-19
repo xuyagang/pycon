@@ -5581,6 +5581,67 @@ import dir2.dir2.mod as mod
 
 #### 包相对导入
 
+包自身的内部，包文件可以使用和外部导入相同的路径语法
+
+python3.0需要显式的相对导入语法，增强代码可读性
+
+#### python3的变化
+
+- 修改了模块导入搜索路径语义，默认跳过包自己的目录，
+- 扩展看from的语法，允许显式的要求导入只搜索包的目录
+
+#### 相对导入基础
+
+- 导入相对于外围的包，只在包内搜索
+
+  ```
+  from . import span
+  from .span import name
+  ```
+
+python3中，不带点号的import总是会引发python略过模块导入搜索路径的相对部分，并且在sys.path所包含的绝对路径中查找
+
+```
+import string
+# 总是在sys.path上的某处查找string模块，而不查找该包中具有的相同模块
+```
+
+点号可以用来仅对from语句强制导入，而不对import,python3中，import modname任然执行相对导入（先搜索包内目录），python2.7中，将变成绝对的
+
+#### python3相对导入
+
+```python
+# 在包外找到模块
+import string
+# 前面没有点号的from语句，看做是绝对的
+from string import name
+# 从包中导入模块
+from . import string
+```
+
+点号 .  用来表示包含文件的包目录，导入就出现在该文件，前面加一个点 .. ,将执行从当前包的父目录相对导入
+
+```python
+from .. import spam
+```
+
+位于某个模块A.B.C 的代码可以做如下导入
+
+```python
+# A.B.D
+from . import D
+# A.E
+from .. import E
+# A.B.D.x
+from .D import x
+# A.E.x
+from ..E import x
+```
+
+#### 相对导入 VS 绝对包路径
+
+
+
 
 
 
