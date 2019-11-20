@@ -5619,7 +5619,7 @@ from string import name
 from . import string
 ```
 
-点号 .  用来表示包含文件的包目录，导入就出现在该文件，前面加一个点 .. ,将执行从当前包的父目录相对导入
+点号 .  用来表示包含文件的包目录，导入就出现在该文件，前面加一个点   ..   ,将执行从当前包的父目录相对导入
 
 ```python
 from .. import spam
@@ -5640,11 +5640,23 @@ from ..E import x
 
 #### 相对导入 VS 绝对包路径
 
+可以在一个绝对导入语句中显式的指定包`from mypkg import string`
 
+这样导入时必须列出包的根目录下是所有目录
 
+#### 模块查找规则
 
+- 简单模块通过搜索sys.path路径上的目录查找，从左到右进行
+- 包是带有一个特殊\_\_init\_\_.py文件的python模块的目录，可以使用点号路径方法
 
+```
+from mypkg import spam 是绝对导入
+from . import spam 是相对导入，spam的查找相对于该语句所在的包，然后才会搜索sys.path
+```
 
+导入详解
+
+<https://blog.csdn.net/weixin_38256474/article/details/81228492>
 
 
 

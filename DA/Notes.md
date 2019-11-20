@@ -4541,33 +4541,238 @@ Name: data1, dtype: float64
 
 quantile并没有实现与groupby，是一个series方法，这里也能使用
 
+如果要使用自己的聚合函数，只需将其传入==aggregate(集合)==或agg方法即可：
 
+```python
+def peak_to_peak(arr):
+    return arr.max() - arr.min()
 
+grouped.agg(peak_to_peak)
+```
 
+describe严格来说不是聚合运算
 
+- groupby的方法
 
+  | 函数        | 说明                          |
+  | ----------- | ----------------------------- |
+  | count       | 分组中非NA值的数量            |
+  | sum         | 非NA值的和                    |
+  | mean        | 非ＮA 的平均值                |
+  | median      | 算术平均数                    |
+  | std、var    | 无偏（分母为n-1）标准差和方差 |
+  | min、max    | 非NA值的最小最大值            |
+  | prod        | 非NA的积                      |
+  | first、last | 第一个和最后一个非ＮＡ值      |
 
+#### 面向列的多函数应用
 
+对series和dataframe的列的聚合其实就是使用aggregate或调用mean、std方法
 
+```python
+grouped = tips.groupby(['day', 'smoker'])
+grouped_pct = grouped['tip_pct']
+grouped_pct.agg('mean')
+>>>
+day   smoker
+Fri   No        0.151650
+      Yes       0.174783
+Sat   No        0.158048
+      Yes       0.147906
+Sun   No        0.160113
+      Yes       0.187250
+Thur  No        0.160298
+      Yes       0.163863
+Name: tip_pct, dtype: float64
+```
 
+统计方法可以传入一组，得到dataframe的列，就会以相应的函数命名
 
+```
+grouped_pct.agg(['mean','std',peak_to_peak])
+>>>
+	mean	std	peak_to_peak
+day	smoker			
+Fri	No	0.151650	0.028123	0.067349
+Yes	0.174783	0.051293	0.159925
+Sat	No	0.158048	0.039767	0.235193
+Yes	0.147906	0.061375	0.290095
+Sun	No	0.160113	0.042347	0.193226
+Yes	0.187250	0.154134	0.644685
+Thur	No	0.160298	0.038774	0.193350
+Yes	0.163863	0.039389	0.151240
+```
 
+并不一定要接收自动给出的列名，特别是lambda，它的名称是<lambda>,这样辨识度就很低
 
+如果传入的是一个由==（name,function）==元组组成的列表，则各个元组的第一个元素会被用作列名
 
+```python
+grouped_pct.agg([('foo','mean'),('bar',np.std)])
+>>>
 
+         foo	bar
+day	smoker		
+Fri	No	0.151650	0.028123
+Yes	0.174783	0.051293
+Sat	No	0.158048	0.039767
+Yes	0.147906	0.061375
+Sun	No	0.160113	0.042347
+Yes	0.187250	0.154134
+Thur	No	0.160298	0.038774
+Yes	0.163863	0.039389
+```
 
+对于dataframe定义一组应用于全部列的函数，或不同的列应用不同的函数
 
+```python
+functions = ['count','mean','max']
+result = grouped['tip_pct','total_bill'].agg(functions)
+result
+>>>
+tip_pct	total_bill
+count	mean	max	count	mean	max
+day	smoker						
+Fri	No	4	0.151650	0.187735	4	18.420000	22.75
+Yes	15	0.174783	0.263480	15	16.813333	40.17
+Sat	No	45	0.158048	0.291990	45	19.661778	48.33
+Yes	42	0.147906	0.325733	42	21.276667	50.81
+Sun	No	57	0.160113	0.252672	57	20.506667	48.17
+Yes	19	0.187250	0.710345	19	24.120000	45.35
+Thur	No	45	0.160298	0.266312	45	17.113111	41.19
+Yes	17	0.163863	0.241255	17	19.190588	43.11
+```
 
+可以传入自定的名称的元组列表
 
+```python
+ftuples = [('durchschnitt','mean'),('abweichung',np.var)]
+grouped['tip_pct','total_bill'].agg(ftuples)
+>>>
+tip_pct	total_bill
+durchschnitt	abweichung	durchschnitt	abweichung
+day	smoker				
+Fri	No	0.151650	0.000791	18.420000	25.596333
+Yes	0.174783	0.002631	16.813333	82.562438
+Sat	No	0.158048	0.001581	19.661778	79.908965
+Yes	0.147906	0.003767	21.276667	101.387535
+Sun	No	0.160113	0.001793	20.506667	66.099980
+Yes	0.187250	0.023757	24.120000	109.046044
+Thur	No	0.160298	0.001503	17.113111	59.625081
+Yes	0.163863	0.001551	19.190588	69.808518
+```
 
+```python
+对不同的列应用不同的函数，向agg传入一个从列名映射函数的字典
+grouped.agg({'tip':np.max,'size':'sum'})
+>>>
+		tip	size
+day	smoker		
+Fri	No	3.50	9
+Yes	4.73	31
+Sat	No	9.00	115
+Yes	10.00	104
+Sun	No	6.00	167
+Yes	6.50	49
+Thur	No	6.70	112
+Yes	5.00	40
 
+grouped.agg({'tip_pct':['min','max','mean','std'],
+            'size':'sum'})
+>>>
+		tip_pct	   size
+min	max	mean	std	sum
+day	smoker					
+Fri	No	0.120385	0.187735	0.151650	0.028123	9
+Yes	0.103555	0.263480	0.174783	0.051293	31
+Sat	No	0.056797	0.291990	0.158048	0.039767	115
+Yes	0.035638	0.325733	0.147906	0.061375	104
+Sun	No	0.059447	0.252672	0.160113	0.042347	167
+Yes	0.065660	0.710345	0.187250	0.154134	49
+Thur	No	0.072961	0.266312	0.160298	0.038774	112
+Yes	0.090014	0.241255	0.163863	0.039389	40
+```
 
+#### 以“无索引”的形式返回聚合数据
 
+目前所示例的聚合数据都有由唯一的分组键组成的索引，由于并不总是需要如此，所以你可以向groupby传入as_index=False以禁止该功能
 
+```python
+tips.groupby(['day','smoker']).mean()
+>>>
+total_bill	tip	size	tip_pct
+day	smoker		
+Fri	No	18.420000	2.812500	2.250000	0.151650
+Yes	16.813333	2.714000	2.066667	0.174783
+Sat	No	19.661778	3.102889	2.555556	0.158048
+Yes	21.276667	2.875476	2.476190	0.147906
+Sun	No	20.506667	3.167895	2.929825	0.160113
+Yes	24.120000	3.516842	2.578947	0.187250
+Thur	No	17.113111	2.673778	2.488889	0.160298
+Yes	19.190588	3.030000	2.352941	0.163863
+
+tips.groupby(['day','smoker'],as_index=False).mean()
+>>>
+day	smoker	total_bill	tip	size	tip_pct
+0	Fri	No	18.420000	2.812500	2.250000	0.151650
+1	Fri	Yes	16.813333	2.714000	2.066667	0.174783
+2	Sat	No	19.661778	3.102889	2.555556	0.158048
+3	Sat	Yes	21.276667	2.875476	2.476190	0.147906
+4	Sun	No	20.506667	3.167895	2.929825	0.160113
+5	Sun	Yes	24.120000	3.516842	2.578947	0.187250
+6	Thur	No	17.113111	2.673778	2.488889	0.160298
+7	Thur	Yes	19.190588	3.030000	2.352941	0.163863
+```
 
 
 
 ### 分组级运算与转换
+
+聚合只不过是分组运算的其中一种，是数据转换的一个特例
+
+接收能将一维数据简化为标量值的函数
+
+transform和apply方法能够执行更多的分组运算
+
+#### apply:一般性的“拆分-应用-合并”
+
+和aggregate一样，transform也是一个有着严格条件的特殊函数，传入的函数只能产生两种结果，要么产生一个可以广播的标量值，要么产生一个相同大小的数组
+
+apply会将待处理的对象拆分成多段，对各段调用函数，最后将各片段组合到一起
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 ### 透视表和交叉表
 
