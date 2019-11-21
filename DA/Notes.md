@@ -4740,6 +4740,93 @@ transform和apply方法能够执行更多的分组运算
 
 apply会将待处理的对象拆分成多段，对各段调用函数，最后将各片段组合到一起
 
+```python
+# 根据分组选出最高的5个tip_pct
+# 编写一个选取指定列具有最大值的行的函数
+def top(df,n=5, column='tip_pct'):
+    return df.sort_values(by=column)[-n:]
+top(tips,n=6)
+>>>
+total_bill	tip	smoker	day	time	size	tip_pct
+109	14.31	4.00	Yes	Sat	Dinner	2	0.279525
+183	23.17	6.50	Yes	Sun	Dinner	4	0.280535
+232	11.61	3.39	No	Sat	Dinner	2	0.291990
+67	3.07	1.00	Yes	Sat	Dinner	1	0.325733
+178	9.60	4.00	Yes	Sun	Dinner	2	0.416667
+172	7.25	5.15	Yes	Sun	Dinner	2	0.710345
+```
+
+```python
+tips.groupby('smoker').apply(top)
+>>>
+	total_bill	tip	smoker	day	time	size	tip_pct
+smoker								
+No	88	24.71	5.85	No	Thur	Lunch	2	0.236746
+    185	20.69	5.00	No	Sun	Dinner	5	0.241663
+    51	10.29	2.60	No	Sun	Dinner	2	0.252672
+    149	7.51	2.00	No	Thur	Lunch	2	0.266312
+    232	11.61	3.39	No	Sat	Dinner	2	0.291990
+Yes	109	14.31	4.00	Yes	Sat	Dinner	2	0.279525
+    183	23.17	6.50	Yes	Sun	Dinner	4	0.280535
+    67	3.07	1.00	Yes	Sat	Dinner	1	0.325733
+    178	9.60	4.00	Yes	Sun	Dinner	2	0.416667
+    172	7.25	5.15	Yes	Sun	Dinner	2	0.710345
+```
+
+```python
+# 传给apply的函数能够接收其他参数或关键字，则可以将这些内容放在函数名后面传入
+tips.groupby(['smoker', 'day']).apply(top, n=1, column='total_bill') 
+>>>
+total_bill	tip	smoker	day	time	size	tip_pct
+smoker	day								
+No	Fri	94	22.75	3.25	No	Fri	Dinner	2	0.142857
+Sat	212	48.33	9.00	No	Sat	Dinner	4	0.186220
+Sun	156	48.17	5.00	No	Sun	Dinner	6	0.103799
+Thur	142	41.19	5.00	No	Thur	Lunch	5	0.121389
+Yes	Fri	95	40.17	4.73	Yes	Fri	Dinner	4	0.117750
+Sat	170	50.81	10.00	Yes	Sat	Dinner	3	0.196812
+Sun	182	45.35	3.50	Yes	Sun	Dinner	3	0.077178
+Thur	197	43.11	5.00	Yes	Thur	Lunch	4	0.115982
+```
+
+#### 禁止分组键
+
+分组键会跟原始对象的索引共同构成结果对象中的层次化索引，将group_keys=False 传入groupby即可禁止
+
+```python
+# 禁止分组键
+tips.groupby('smoker').apply(top)
+>>>
+total_bill	tip	smoker	day	time	size	tip_pct
+smoker								
+ No	88	24.71	5.85	No	Thur	Lunch	2	0.236746
+    185	20.69	5.00	No	Sun	Dinner	5	0.241663
+    51	10.29	2.60	No	Sun	Dinner	2	0.252672
+    149	7.51	2.00	No	Thur	Lunch	2	0.266312
+    232	11.61	3.39	No	Sat	Dinner	2	0.291990
+Yes	109	14.31	4.00	Yes	Sat	Dinner	2	0.279525
+    183	23.17	6.50	Yes	Sun	Dinner	4	0.280535
+    67	3.07	1.00	Yes	Sat	Dinner	1	0.325733
+    178	9.60	4.00	Yes	Sun	Dinner	2	0.416667
+    172	7.25	5.15	Yes	Sun	Dinner	2	0.710345
+    
+tips.groupby('smoker',group_keys=False).apply(top)
+>>>
+	total_bill	tip	smoker	day	time	size	tip_pct
+88	24.71	5.85	No	Thur	Lunch	2	0.236746
+185	20.69	5.00	No	Sun	Dinner	5	0.241663
+51	10.29	2.60	No	Sun	Dinner	2	0.252672
+149	7.51	2.00	No	Thur	Lunch	2	0.266312
+232	11.61	3.39	No	Sat	Dinner	2	0.291990
+109	14.31	4.00	Yes	Sat	Dinner	2	0.279525
+183	23.17	6.50	Yes	Sun	Dinner	4	0.280535
+67	3.07	1.00	Yes	Sat	Dinner	1	0.325733
+178	9.60	4.00	Yes	Sun	Dinner	2	0.416667
+172	7.25	5.15	Yes	Sun	Dinner	2	0.710345
+```
+
+
+
 
 
 
