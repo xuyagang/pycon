@@ -4825,43 +4825,150 @@ tips.groupby('smoker',group_keys=False).apply(top)
 172	7.25	5.15	Yes	Sun	Dinner	2	0.710345
 ```
 
+#### 分位数和桶分析
 
+pandas有一些能根据指定面元或样本分位数将数据拆分成多块的工具（比如cut或qcut）
 
+```python
+frame = pd.DataFrame({'data1':np.random.randn(1000),
+                     'data2':np.random.randn(1000)})
+quartiles = pd.cut(frame.data1,4)
+quartiles[:10]
+# cut返回的Factor对象可以直接用于groupby
+>>>
+0    (-1.275, 0.3]
+1    (-1.275, 0.3]
+2     (0.3, 1.875]
+3    (-1.275, 0.3]
+4     (0.3, 1.875]
+5    (-1.275, 0.3]
+6    (-1.275, 0.3]
+7    (-1.275, 0.3]
+8     (0.3, 1.875]
+9     (0.3, 1.875]
+Name: data1, dtype: category
+Categories (4, interval[float64]): [(-2.857, -1.275] < (-1.275, 0.3] < (0.3, 1.875] < (1.875, 3.449]]
+  
+def get_stats(group):
+    return {'min':group.min(),'max':group.max(),
+           'count':group.count(),'mean':group.mean()}
+grouped = frame.data2.groupby(quartiles)                                                                                                                                   grouped.apply(get_stats).unstack()
+>>>                                                                                    count	max	mean	min
+data1				
+(-2.857, -1.275]	102.0	2.834342	-0.065788	-2.523687
+(-1.275, 0.3]	537.0	3.065880	0.052920	-2.949736
+(0.3, 1.875]	337.0	2.488922	0.109874	-2.402608
+(1.875, 3.449]	24.0	2.009093	-0.209980	-2.739957
+```
 
+长度相等的桶：区间大小相等
 
+大小相等的桶：数据点数量相等
 
+- 对不同的分组填充不同的值
 
+  ```python
+  states = ['Ohio', 'New York', 'Vermont', 'Florida','Oregon', 'Nevada', 'California', 'Idaho']
+  group_key = ['East'] * 4 + ['West'] * 4
+  group_key
+  >>>
+  ['East', 'East', 'East', 'East', 'West', 'West', 'West', 'West']
+  
+  data=pd.Series(np.random.randn(8), index=states)
+  data[['Vermont', 'Nevada', 'Idaho']] = np.nan
+  data
+  >>>
+  Ohio          0.592806
+  New York     -0.115530
+  Vermont            NaN
+  Florida       1.495049
+  Oregon       -0.225957
+  Nevada             NaN
+  California    0.923421
+  Idaho              NaN
+  dtype: float64
+  >>>
+  fill_mean = lambda x:x.fillna(x.mean())
+  data.groupby(group_key).apply(fill_mean)
+  >>>
+  Ohio          0.592806
+  New York     -0.115530
+  Vermont       0.657442
+  Florida       1.495049
+  Oregon       -0.225957
+  Nevada        0.348732
+  California    0.923421
+  Idaho         0.348732
+  dtype: float64
+  ```
 
+  #### 随机采样和排列
 
+  抽取的方式有很多，其中一些的效率会比其他的高很多，一个办法是选取np.random.peimutation(N)的前k个元素，其中N为完整数据的大小，k为期望的样本大小
 
+  ```python
+  # 
+  ```
 
+  pg285
 
+  #### 分组加权平均数和相关系数
 
+  
 
+  #### 面向分组的线性回归
 
+  
 
+  
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+  
 
 
 
 ### 透视表和交叉表
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 ### 示例：2012联邦选举委员会数据库
 

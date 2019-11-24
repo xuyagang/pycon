@@ -5401,6 +5401,18 @@ from语句有破环命名空间的潜质---如果使用from导入变量碰巧和
 
 \_\_dict\_\_的使用：`module.__dict__.keys()`,_\_dict\_\_是一个视图要包含在list中使用
 
+
+
+- \_\_dict\_\_
+
+  - 类的静态函数，类函数，普通函数，全局变量以及内置属性都放在类__dict__中，
+
+  - 对象的__dict__中存储了self.xx的东西
+
+  - 内置的数据类型没有__dict__属性
+
+    
+
 ##### 属性名的点号运算
 
 点号运算可以获取对象的属性
@@ -5761,19 +5773,157 @@ sys.modules['M'].name
 getattr(M,'name')
 ```
 
+```python
+>>> import tkinter
+>>> tkinter.__doc__
+'Wrapper functions for Tcl/Tk.\n\nTkinter provides classes which allow the display, positioning and\ncontrol of widgets. Toplevel widgets are Tk and Toplevel. Other\nwidgets are Frame, Label, Entry, Text, Canvas, Button, Radiobutton,\nChnCheckbutton, Scale, Listbox, Scrollbar, OptionMenu, Spinbox\nLabelFrame and PanedWindow.\n\nProperties of the widgets are specified with keyword arguments.\nKeyword arguments have the same name as the corresponding resource\nunder Tk\nW.\n\nWidgets are positioned with one of the geometry managers Place, Pack\nor Grid. These managers can be called with methods place, pack, grid\navailable in every Widget.\n\nActions are bound to events by resources (e.g. keyword argucomment\ncommand) or with the method bind.\n\nExample (Hello, World):\nimport tkinter\nfrom tkinter.constants import *\ntk = tkinter.Tk()\nframe = tkinter.Frame(tk, relief=RIDGE, borderwidth=2)\nframe.pack(fill=BOTH,expand=1)\nlabel = tkel(inter.Label(frame, text="Hello, World")\nlabel.pack(fill=X, expand=1)\nbutton = tkinter.Button(frame,text="Exit",command=tk.destroy)\nbutton.pack(side=BOTTOM)\ntk.mainloop()\n'
+>>> tkinter.__name__
+'tkinter'
+>>> tkinter.__file__
+'C:\\Users\\Dell\\Anaconda3\\lib\\tkinter\\__init__.py'
+```
+
+==_\_name\_\_, _\_file\_\_, _\_doc\_\_==
+
+#### 用名称字符串导入模块
+
+无法使用import 语句来直接载入以字符串形式给出名称的模块
+
+```python
+import 'string'
+>>>
+ File "<stdin>", line 1
+    import 'string'
+                  ^
+SyntaxError: invalid syntax
+    
+x = 'string'
+import x
+
+# 这里python会尝试导入一个x.py的文件
+```
+
+import语句中的名称，既变成了赋给载入模块的一个变量，也从字面上标识了该外部文件
+
+- 解决方法：
+
+  ```python
+  # 把导入语句构建成为python 代码的一个字符串，将其传递给exec内置函数
+  modname = 'string'
+  exec('import '+modname)
+  string
+  >>>
+  <module 'string' from 'D:\\project\\pycon\\Python_学习手册\\Exercise\\相对导入\\string.py'>
+  ```
+
+exec函数及其近亲 eval 编译一个代码字符串，并将其传递给解释器以执行
+
+exec唯一的缺点是，每次运行时必须编译import语句，如果它运行多次，如果使用内置的_\_import\_\_函数来从一个名称字符串载入的话，代码可能运行得更快
+
+_\_import\_\_ 运行模块对象，因此在这将其赋值给一个名称以保存它
+
+```python
+modname = 'string'
+string = __import__(modname)
+string
+>>>
+<module 'string' from 'D:\\project\\pycon\\Python_学习手册\\Exercise\\相对导入\\string.py'>
+```
+
+#### 过渡性模块重载
+
+如果重载模块A，A导入模块B和C ,重载只适用于A，而不适用于B和C
+
+A中导入B和C的语句在重载的时候重新运行，但只是获取已经载入的B和C模块
+
+不能依赖重载来过渡性的选择程序中所有模块中的修改，必须使用多次reload调用来独立的更新子部分，对于交互测试的系统，工作量很大，可以通过在A这样的父模块中添加reload调用，自动重载子部分
+
+- 一种更好的方式是编写一个通用的工具自动过渡性重载，通过扫描\_\_dict\_\_属性并检查每一项的type找到要重新载入的嵌套模块，函数递归的调用自己，来导航任意形式的导入依赖性链条
 
 
 
+要使用这一工具，导入其reload_all函数并将一个已经载入的模块的名称传入
 
+#### 模块设计理念
 
+- 总是在python模块内编写代码
 
+  在交互模式下输入的程序代码，其实是存在于内置模块\_\_main\_\_之内，交互模式独特之处在于程序是执行后立刻丢弃
 
+- 模块耦合要降到最低：全局变量
 
+  模块尽可能和其他模块的全局变量无关
 
+- 最大化模块的黏合性，统一目标，最大化黏合性来最小化模块耦合性
 
+- 模块应该少去修改其他模块的变量
 
+#### 模块陷阱
 
+##### 顶层代码的语句次序的重要性
 
+模块文件顶层的代码，运行时立即执行，无法引用文件后面赋值的变量名
+
+位于函数主体的代码直到调用时才会运行，函数内的变量在实际执行前不会解析
+
+函数可以任意引用变量名
+
+##### from复制变量名，而不是连接
+
+from也是python各种潜在陷阱的源头，from在当前作用域对变量名的赋值语句，也就是拷贝变量名，而不是变量名的别名机制
+
+> 如果我们在模块内导入两个变量名，就会得到两个变量名的拷贝，而不是对两个变量名的连接
+
+在导入者内修改变量名，只会重设变量名在本地作用域的绑定值，而不是导入的模块中的变量
+
+```python
+# nested1.py
+x = 99
+def printer(): 
+    print(x)
+```
+
+```python
+# nested2.py
+from nested1 import x,printer
+x = 88
+printer()
+>>>
+99
+```
+
+如果我们使用了import ,然后赋值某个点号运算的变量名，就会修改被导入模块的变量名，点号运算定向到了模块对象的变量名，而不是导入者的变量名
+
+```python
+# nested3.py
+import nested1
+nested1.x = 88
+nested1.printer()
+>>>
+88
+```
+
+##### from * 让变量语义模糊
+
+使用from module import * 语句时，可能会意外的覆盖了作用域内已经使用的变量名，很难确认来自何处
+
+- 试着在from语句中明确列出想要的属性，限制每个文件最多有一个被导入的模块使用from * 方式
+
+##### reload不会影响from导入
+
+from 在执行是复制变量名，不会连接到变量名的那个模块，通过from导入的变量名变成了对象的引用
+
+重载使用from导入的模块变量名对客户端无影响
+
+为了保证重载有效，可以使用import以及点号运算来取代from,点号运算总是会回到模块
+
+##### 递归形式的from导入无法工作
+
+导入会从头到尾执行一个文件，使用相互导入的模块时，因为一个模块内的语句在其导入另外一个模块时不会全部执行
+
+如果使用import取出整个模块，模块的变量名在稍后使用点号运算，在获取值之前都不会读取
+
+如果使用from读取特定的变量名，只能读取在模块中已经赋值的变量名
 
 
 
