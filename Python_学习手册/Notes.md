@@ -6288,7 +6288,104 @@ print(rec.name)
 
 __类只是独立完备的命名空间，只要有类的引用值，就可以在任何时段设定或修改其属性__
 
-pg641
+```python
+class rec: pass
+
+# 没有写任何方法，所以我们需要无操作的pass语句
+# 可通过赋值变量名给类增加属性
+rec.name = 'Bob'
+rec.age = 40
+print('hello')
+
+# 创建两个实例
+x = rec()
+y = rec()
+print(x.name, y.name)
+
+# 实例并没有属性，它们只是从类对象取出name属性
+# 如果把一个属性赋值给一个实例，就会在对象内创建（或修改）该属性
+# 属性赋值运算只会影响属性赋值所在对象
+x.name = 'adam'
+print(rec.name, x.name, y.name)
+```
+
+`__dict__`属性是针对大多数基于类的对象的命名空间字典
+
+```python
+print(rec.__dict__)
+>>>
+{'__module__': '__main__', '__dict__': <attribute '__dict__' of 'rec' objects>, '__weakref__': <attribute '__weakref__' of 'rec' objects>,
+'__doc__': None, 'name': 'Bob', 'age': 40}
+
+print(x.__dict__.keys())
+>>>
+dict_keys(['name'])
+print(y.__dict__.keys())
+>>>
+dict_keys([])
+```
+
+`__class__`没个实例都连接至类，便于继承
+
+```python
+print(x.__class__)
+>>>
+<class '__main__.rec'>
+```
+
+`__bases__`属性是超类的元组
+
+```python
+print(rec.__bases__)
+>>>
+(<class 'object'>,)
+```
+
+__类和实例只是命名空间，属性是通过赋值语句动态建立__
+
+方法也可以完全独立的在任意类对象的外部创建
+
+```python
+# 在任意类之外定义一个简单的函数
+# 需要传入self参数
+def upperName(self):
+    return self.name.upper()
+```
+
+这里与类完全没有关系，只是一个简单的函数，当我们传入一个带有那么属性的对象，就可以调用
+
+```python
+upperName(x)
+>>>
+ADAM
+```
+
+当我们把这个函数赋值成类的属性，就会变成方法，可以由任何实例调用
+
+```python
+def upperName(self):
+    print(self.name.upper())
+    
+print('_'*7)
+print(upperName(x))
+>>>
+_______
+ADAM
+
+rec.method = upperName
+x.method()
+y.method()
+rec.method(x)
+>>>
+None
+ADAM
+BOB
+ADAM
+```
+
+__Python的OOP 就是在已连接命名空间对象内寻找属性__
+
+#### 类与字典的关系
 
 
 
