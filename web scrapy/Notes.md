@@ -406,7 +406,125 @@ Python 2 中，有 urllib 和 urllib2 两个库来实现请求的发送。 而�
 
 - 添加headers
 
-- 
+- post请求
+
+- 响应
+
+   'encoding', 'headers', 'history','json', 'links'，'status_code', 'text', 'url'， 'cookies'
+
+  ```
+  requests.codes.ok
+  # 内置的请求码
+  ```
+
+  - 1开头的——信息性状态吗
+  - 2开头的——成功状态码
+  - 3开头的——重定向
+  - 4开头的——客户端错误码
+  - 5开头的——服务端错误码
+
+- 高级用法
+
+  - cookie
+
+    - 可以把cookies设置到headers中
+
+      ```
+      Cookie: _ga=GA1.2.1879080799.1543498454; _octo=GH1.1.33263197.1543498454; tz=Asia%2FShanghai; ignored_unsupported_browser_notice=false; _device_id=f95f96fa24bf56d4369ea895b0442d55; has_recent_activity=1; user_session=O1U4N-PfcgxWOt3O3XGwq_T63nfDzOZDK2VB6MZThzu3Zzxe; __Host-user_session_same_site=O1U4N-PfcgxWOt3O3XGwq_T63nfDzOZDK2VB6MZThzu3Zzxe; logged_in=yes; dotcom_user=xuyagang; _gh_sess=Y1g5RTdCMGp5WTBiYkRzaGJXWGsrdFZWNTZsblBKRzIxRHFFYTZHUS93b1B3V0o5SXlSWXloVmZNNFFOR29ibEpFTjNSYkdRbmtJcTJHdWZsYnJuM0krNktFMzBNRnhNR3JYczN6czN5MlBtak5OUXdoN3ZQWFlZUHMrZDNTMk14L1NyQjk3OEhWOWxIL0prc3VBU1htVDJCU1o3Mjh4MGVBZUROVG9CckFmNUorN0lKZWpZNVZJdVdhTVRMc3ZlcldrMmw4amtwTk1sMnZNYytPanpyUT09LS0zeXRQTmgvU0hSYjZRbTFUY0NRQmdRPT0%3D--2b26c6c16630644c2d39e024a1ce14ad903bdc66
+      ```
+
+    - 也可以通过cookies参数来设置，需要构造RequestsCookieJar对象，需要分割cookies,相对繁琐
+
+      ```python
+      cookies = '_ga=GA1.2.1879080799.1543498454; 
+      _octo=GH1.1.33263197.1543498454; tz=Asia%2FShanghai; ignored_unsupported_browser_notice=false; _device_id=f95f96fa24bf56d4369ea895b0442d55; has_recent_activity=1;'
+      
+      jar = requests.cookies.RequestsCookieJar()
+      headers = {
+          'Host':url,
+          'User-Agent':...,
+      }
+      for cookie in cookies.split(';'):
+          key,value = cookies.split('=',1)
+          jar.set(key,value)
+      r = requests.get(url,cookies=jar,headers=headers)
+      ```
+
+  - 会话维持
+
+    session可以维持一个会话，而不用担心cookies的问题
+
+    ```python
+    import requests
+    # 请求并设置cookies为123456
+    requests.get('http://httpbin.org/cookies/set/number/123456')
+    # 随后又请求一次,可以获取当前cookies
+    r = requests.get('http://httpbin.org/cookies')
+    print(r.text)
+    '''
+    {
+      "cookies": {}
+    }
+    '''
+    
+    
+    # 我们用session试试
+    s = requests.session()
+    s.get('http://httpbin.org/cookies/set/number/123456')
+    r = s.get('http://httpbin.org/cookies')
+    print(r.text)
+    '''
+    {
+      "cookies": {
+        "number": "123456"
+      }
+    }
+    '''
+    ```
+
+  - 证书验证
+
+    如果一个HTTPS站点，出现证书验证错误页面，可以把 verify参数设置为 False避免这个错误
+
+    ```python
+    resp = requests.get('https://www.12306.cn',verify=False)
+    >>>
+    /usr/lib/python3/dist-packages/urllib3/connectionpool.py:860: InsecureRequestWarning: Unverified HTTPS request is being made. Adding certificate verification is strongly advised. See: https://urllib3.readthedocs.io/en/latest/advanced-usage.html#ssl-warnings
+      InsecureRequestWarning)
+    ```
+
+    这样会给出一个警告，建议我们指定证书，可以通过设置忽略警告的方式来屏蔽这个警告
+
+    ```python
+    import requests
+    from requests.packages import urllib3
+    
+    urllib3.disable_warnings()
+    resp = requests.get('https://www.12306.cn',verify=False)
+    print(resp.status_code)
+    ```
+
+    或者捕获警告到日志的方式以忽略
+
+    ```python
+    import logging
+    
+    logging.captureWarnings(True)
+    resp = resp = requests.get('https://www.12306.cn',verify=False)
+    print(resp.status_code)
+    ```
+
+    也可以指定一个本地证书用作客户端证书，可以是单个文件或包含两个文件路径的元组
+
+    ```python
+    resp = requests.get('https://www.12306.cn', cert=('/path/server.crt','/path/key'))
+    ```
+
+    只是演示，需要有crt和key文件，并指定路径，本地的私有证书必须是解密状态
+
+  - 
+
+  
 
 ### 3.3正则表达式
 
