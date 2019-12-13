@@ -6387,45 +6387,161 @@ __Python的OOP 就是在已连接命名空间对象内寻找属性__
 
 #### 类与字典的关系
 
+可以用类的键来记录属性：
 
+```python
+class rec:pass
+rec.name='mel'
+rec.age=45
+rec.job='writer'
+print(rec.age)
+```
 
+可以字典来记录
 
+```python
+rec={}
+rec['name']='mel'
+rec['job']= 'writer'
+```
 
+类的等价形式比字典要小很多，可以产生一个空类的实例来表示不同的记录
 
+```python
+class rec:pass
+per1 = rec()
+per1.name='mel'
 
+per2 = rec()
+per2.name='vls'
+```
 
+#### 总结
 
+- 类位于模块中，是模块的属性，类和模块都是命名空间，类对应于语句，支持多实例，
 
+- 类是通过class语句创建，实例是像函数那样调用来创建
 
+- 类属性的创建是通过把属性赋值给类对象实现的，类属性通常是由class语句中的顶层赋值语句产生，每个在class语句代码区中赋值的变量，会变为类对象的属性，也可以在任何引用类对象的地方对其属性赋值，从而创建类属性
 
+- 实例属性是通过对实例对象赋值属性来创建的，一般是在class语句中的类方法函数中对self参数（永远是隐含实例）赋值创建的，也可以在任何地方引用实例通过赋值语句来创建属性，即使在class语句外，一般来说，所有的实例属性都是在`__init__`构造函数中初始化
 
+- self通常是给与类方法函数中的第一个参数的名称，python会自动填入实例对象（方法调用的隐含的主体），这个参数不必叫self,其位置才是重点（同c++于java中的this）
 
+- python类中的运算符重载是用特定名称的方法写成的，这些方法的开头和结尾都是双下划线，通过这种办法使其变得独特，这些不是内置或保留字，当实例出现在相应运算中时，python会自动执行，python为这些运算和特殊方法的名称定义了对应关系
 
+- 运算符重载可用于实现模拟内置类型的对象，以及模拟代码中所预期的内置类型接口
 
+- `__init__`构造函数是最常用的，几乎每个类都使用这个方法为实例属性进行初始化，以及执行其他的启动任务
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+  
 
 ### 第二十七章_更多实例
 
+python中第二常用的运算符重载方法是继`__init__`之后的`__str__`——提供打印显示
+
+#### 扩展方法的方式
+
+- 不好的方式
+
+```python
+class Person:
+    def __init__(self, name, job=None, pay=0):
+        self.name = name
+        self.job = job 
+        self.pay = pay
+    def lastName(self):
+        return self.name.split()[-1]
+    def giveRaise(self, percent):
+        self.pay = int(self.pay * (1+percent))
+    def __str__(self):
+        return '[Person: %s, %s]' % (self.name, self.pay)
+
+
+# 扩展方法——不好的方式
+class Manager1(Person):
+    def giveRaise(self, percent, bonus=.10):
+        # 不好的方式是复制和粘贴person中的giveraise的代码
+        self.pay = int(self.pay * (1 + percent + bonus))
+```
+
+复制粘贴的代码基本上都会使未来的维护工作倍增——如果改变了涨工资的方式，将必须修改两个地方的代码
+
+- 好的方式
+
+```python
+# 扩展方法——好的方式
+class Manager(Person):
+    def giveRaise(self, percent, bonus=0.10):
+        # 使用扩展的方式来直接调用最初的方式
+        Person.giveRaise(self, percent + bonus)
+```
+
+类方法总是可以在实例中调用，或者通过类来调用
+
+```python
+instance.method(args...)
+等价于
+class.methon(instance,args...)
+```
+
+
+
 ### 第二十八章_类代码编写细节
+
+#### 调用超类构造函数
+
+```python
+class Supper:
+    def __inint__(self,x):
+        # default code...
+class Sub(Supper):
+    def __init__(self,x,y):
+        Supper.__init__(self,x)
+        # default code
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+### 
+
+### 
 
 ### 第二十九章_运算符重载
 
