@@ -16,3 +16,10 @@ s = requests.session()
 s.get('http://httpbin.org/cookies/set/number/123456')
 r = s.get('http://httpbin.org/cookies')
 print(r.text)
+'''
+{
+  "cookies": {
+    "number": "123456"
+  }
+}
+'''

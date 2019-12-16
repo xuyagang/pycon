@@ -522,9 +522,110 @@ Python 2 中，有 urllib 和 urllib2 两个库来实现请求的发送。 而�
 
     只是演示，需要有crt和key文件，并指定路径，本地的私有证书必须是解密状态
 
-  - 
+  - 代理设置
 
-  
+    为了防止因频繁请求而封禁客户端，需要设置代理来解决这个问题，需要用到proxies参数
+
+    ```python
+    proxies={
+        'http':'http://10.10.1.10:3128',
+        'https':'http://10.10.1.10:1028'
+    }
+    requests.get(url,proxies=proxies)
+    ```
+
+    requests 还支持socks协议的代理
+
+    ```python
+    # 安装socks
+    # pip install 'requests[socks]'
+    import requests
+    proxies={
+        'http':'socks5://user:password@host:port',
+        'https':'socks5://user:password@host:port'
+    }
+    requests.get(url, proxies=proxies)
+    ```
+
+  - 超时设置
+
+    网络状态不好时，需要等很久的时间才能响应，甚至到最后收不到响应而报错，为了防止不能及时响应，需要设置一个超时时间，即过了这个时间没得到响应就报错，需要用到timeout参数
+
+    这个时间是从发出请求到服务器返回响应的时间
+
+    ```python
+    import requests
+    
+    r = requests.get(url,timeout=1)
+    ```
+
+    将超时时间设置为1，如果1秒内没有响应那就抛出异常
+
+    请求分两个阶段，即连接和读取，上面设置的timeout将用连接和读取这两者的timeout总和
+
+    - `连接超时`指的是客户端实现到远端服务器端口的连接时request 所等待的时间。连接超时一般设为比 3 的倍数略大的一个数值，因为 TCP 数据包重传窗口的默认大小是 3。
+
+    - `读取超时`指的客户端已经连接上服务器并且发送了request后，客户端等待服务器发送请求的时间。（一般指的是服务器发送第一个字节之前的时间）
+
+      
+
+    如果要分别指定，可以传入一个元组
+
+    ```python 
+    r = requests.get('https://github.com', timeout=(3.05, 27))
+    ```
+
+  - 身份认证
+
+    ```python
+    import requests
+    from requests.auth import HTTPBasicAuth
+    
+    r = requests.get('http://localhost:5000', auth=HTTPBasicAuth('username','password'))
+    ```
+
+    如果参数都传HTTPBasicAuth类，就显得有点繁琐，requests提供了一个更简单的写法，直接传入一个元组，会默认使用HTTPBasicAuth类来认证
+
+    ```python
+    import requests
+    r = requests.get(url,auth=('username','password'))
+    ```
+
+    requests还提供了其他认证方式，如OAuth,需要安装oauth包
+
+    ```python
+     # pip3 install requests_oauthlib
+    import requests
+    form requests_oauthlib import OAuth1
+    
+    auth = OAuth1('app_key','app_secret','oauth_token','oauth_tocken_secret')
+    requests.get(url,auth=auth)
+    ```
+
+  - Prepared Request
+
+    可以将请求表示为数据结构，各个参数可以通过一个requests对象来表示，这个数据结构叫Prepared Requests
+
+    ```PYTHON
+    from requests import Request,Session
+    url = 'http://httpbin.org/post'
+    data={
+        'name':'germey'
+    }
+    headers={
+        'User-Agent':'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 \
+                (KHTML, like Gecko) Chrome/78.0.3904.108 Safari/537.36'
+    }
+    s = Session()
+    # 构造Request对象，
+    req = Request('POST', url, data=data, headers=headers)
+    # 调用prepare_request()将Request对象转为一个Prepared Request
+    prepped = s.prepare_request(req)
+    # 调用send()方法发送
+    r = s.send(prepped)
+    ```
+
+    
 
 ### 3.3正则表达式
 
@@ -661,7 +762,15 @@ ___
   r.encoding = encoding
   ```
 
-  
+## 第四章 解析库的使用
+
+比较强大的解析库lxml,beautiful Soup,pyquery
+
+### 4.1 xPath
+
+全称XML path language
+
+![012](D:\project\pycon\web scrapy\img\012.PNG)
 
 
 

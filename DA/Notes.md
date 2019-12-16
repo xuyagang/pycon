@@ -1053,8 +1053,23 @@ DataFrame是一个表格型的数据结构，有一组有序的列，每列有�
 
     Series有一个应用于元素级函数的map方法：
 
-    ```
-    frame['e'].map(fm)
+    > eries的map方法可以接受一个函数或含有映射关系的字典型对象
+    >
+    > 使用map是一种实现元素级转换以及其他数据清理工作的便捷方式
+    >
+    > （DataFrame中对应的是applymap()函数，当然DataFrame还有apply()函数）
+
+    ```python
+    # map accepts a dict or a Series. Values that are not found in the dict are 
+    # converted to NaN, unless the dict has a default value
+    s = pd.Series(['cat', 'dog', np.nan, 'rabbit'])
+    s = pd.Series(['cat', 'dog', np.nan, 'rabbit'])
+    >>>
+    0   kitten
+    1    puppy
+    2      NaN
+    3      NaN
+    dtype: object
     ```
 
   - 排序和排名
@@ -1358,7 +1373,7 @@ GOOG	0.457141	0.400139	0.534055	1.000000
   > array(['a', 'b', 'c', 'd'], dtype=object)
   ```
 
-- values_counts:用于计算一个Series中各值出现的频率
+- ==values_counts==:用于计算一个Series中==各值出现的频率==
 
   ```python
   # obj.value_counts(normalize=False, sort=True, ascending=False, bins=None, dropna=True)
@@ -4934,18 +4949,31 @@ data1
 
 Dataframe有一个povit_table的方法，此外还有一个顶级的pandas.povit_table函数
 
-| pivot_table | 说明                                                         |
-| ----------- | ------------------------------------------------------------ |
-| values      | 待聚合的列的名称，默认聚合所有数值列                         |
-| rows        | 用于分组的列名或其他分组键，出现在结果透视表的行             |
-| cols        | 用于分组的列名或其他分组键，出现在结果透视表的列             |
-| aggfunc     | 聚合函数或函数列表，默认为’mean‘,可以是任何对groupby有效的函数 |
-| fill_value  | 用于替换结果表中的缺失值                                     |
-| margins     | 添加行/列小计和总计，默认为false                             |
+``pivot_table`(*self*, *values=None*, *index=None*, *columns=None*, *aggfunc='mean'*, *fill_value=None*, *margins=False*, *dropna=True*, *margins_name='All'*, *observed=False*)`
+
+| pivot_table  | 说明                                            |                                                              |
+| ------------ | ----------------------------------------------- | ------------------------------------------------------------ |
+| data         | DataFrame                                       |                                                              |
+| values       | column to aggregate, optional                   | 聚合的列                                                     |
+| index        | column, Grouper, array, or list of the previous | 如果使Array，则长度需要与data相同；<br/>list内可以包含除list之外的其他各种类型；
+在透视表索引上分组的键，如果传入的是array，用法与列值一样 |
+| columns      |                                                 | 如果传入array，长度需与data相同                              |
+| aggfunc      |                                                 | 如果是list of functions，得到的透视表具有分层的列，他们的最高级别是函数名称；<br/>如果是dict，key是需要聚合的列，value是函数或函数列 |
+| fill_value   |                                                 | 填充缺失值                                                   |
+| margins      |                                                 | 添加所有row/columns                                          |
+| dropna       |                                                 | 不包括全是NaN的列                                            |
+| margins_name |                                                 | 当margins是True，包含总数的行/列名字                         |
+| observed     |                                                 |                                                              |
+
+[案例](<https://www.cnblogs.com/onemorepoint/p/8425300.html>)
+
+
 
 #### 交叉表：crosstab
 
 交叉表是一种用于计算分组频率的透视表
+
+![038](D:\project\pycon\DA\img\038.jpg)
 
 
 

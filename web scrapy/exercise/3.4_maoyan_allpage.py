@@ -74,3 +74,5 @@ def main():
     # print(list(parse_one_page(html)))
 
 main()
+
+str.split()
