@@ -4965,9 +4965,9 @@ Dataframe有一个povit_table的方法，此外还有一个顶级的pandas.povit
 | margins_name |                                                 | 当margins是True，包含总数的行/列名字                         |
 | observed     |                                                 |                                                              |
 
+
+
 [案例](<https://www.cnblogs.com/onemorepoint/p/8425300.html>)
-
-
 
 #### 交叉表：crosstab
 
@@ -5015,13 +5015,26 @@ Dataframe有一个povit_table的方法，此外还有一个顶级的pandas.povit
 
 
 
-### 
-
 
 
 ## 第十章 时间序列
 
+很多时间序列是固定频率的，时间序列也可以不固定频率
+
+时间序列数据的意义取决于具体的应用场景
+
+- 时间戳，特定的时刻
+- 固定时期
+- 时间间隔（由起使和结束时间表示），时期是时间间隔的特例
+- 实验或过程时间
+
+pandas提供了一组标准的时间序列处理工具和数据 算法，可以高效处理非常大的时间序列，轻松切片，聚合，采样
+
 ### 日期和时间数据类型及工具
+
+我们会用到datetime，time，calendar模块，datetime.datetime是用的最多的数据类型
+
+
 
 ### 时间序列基础
 
