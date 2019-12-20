@@ -5034,6 +5034,73 @@ pandas提供了一组标准的时间序列处理工具和数据 算法，可以�
 
 我们会用到datetime，time，calendar模块，datetime.datetime是用的最多的数据类型
 
+datetime 以毫秒形式存储日期和时间
+
+datetime.tiemdelta表示两个datetime对象间的时间差
+
+给datetime对象加上（减去）一个timedelta对象，这样会产生一个新对象
+
+#### datetime模块中的数据类型
+
+- date(公立形式存储日历日期（年月日）)
+- time将时间存储为时，分，秒，毫秒
+- datetime 存储日期和时间
+- timedelta表示两个datetime值的差（日，秒，毫秒）
+
+```python
+from datetime import datetime
+now  = datetime.now()
+now
+>>>datetime.datetime(2019, 12, 20, 0, 20, 58, 473175)
+# 类属性：min,max,resolution
+# 实例属性：year,month,day,hour,minute,second,microsecond,tzinfo,fold
+```
+
+#### 字符串于datetime的相互转换
+
+利用str或strftime,datetime对象和pandas的Timestamp对象可以被格式化为字符串
+
+```python
+stamp = datetime(2012,12,3)
+stamp
+>>>datetime.datetime(2012, 12, 3, 0, 0)
+str(stamp)
+>>>'2012-12-03 00:00:00'
+datetime.strftime(stamp,'%Y-%m-%d')
+>>>'2012-12-03'
+# datetime.strptime 可以把字符串转为日期
+value = '1991-09-27'
+datetime.strptime(value,'%Y-%m-%d')
+>>>datetime.datetime(1991, 9, 27, 0, 0)
+```
+
+datetime.strptime 是把字符串转为日期的最佳方式，但每次编写格式定义很麻烦，这时可以采用==dateutil==这个第三方包中的==parser.parse==
+
+```python
+from dateutil.parser import parse
+parse('2011-03-15')
+>>>datetime.datetime(2011, 3, 15, 0, 0)
+```
+
+dateutil可以解析几乎所有认类能理解的日期形式
+
+```python
+parse('Jan 31,1991,10:15 PM')
+>>>datetime.datetime(2019, 1, 31, 22, 15)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 ### 时间序列基础
