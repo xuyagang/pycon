@@ -5082,12 +5082,228 @@ parse('2011-03-15')
 >>>datetime.datetime(2011, 3, 15, 0, 0)
 ```
 
-dateutil可以解析几乎所有认类能理解的日期形式
+dateutil可以解析几乎==所有==认类能理解的==日期形式==
 
 ```python
 parse('Jan 31,1991,10:15 PM')
 >>>datetime.datetime(2019, 1, 31, 22, 15)
 ```
+
+国际通用的格式中，日通常出现在月的前面，传入==dayfirst=True==即可解决这个问题
+
+```python
+parse('6/12/2011', dayfirst=True)
+>>>
+datetime.datetime(2011, 12, 6, 0, 0)
+parse('6/12/2011')
+>>>
+datetime.datetime(2011, 6, 12, 0, 0)
+```
+
+==pandas通常是用于处理成组日期的==，不管这些日期是DataFrame的轴索引还是列
+
+to_datetime可以解析多种不同的日期表示形式，对标准格式解析非常快
+
+```python
+import pandas as pd
+
+datestrs = ['7/6/2011','8/6/2011']
+pd.to_datetime(datestrs,dayfirst=True)
+>>>DatetimeIndex(['2011-06-07', '2011-06-08'], dtype='datetime64[ns]', freq=None)
+```
+
+还可以处理缺失值（None,空字符串）
+
+```python
+idx = pd.to_datetime(datestrs + [None])
+idx
+>>>DatetimeIndex(['2011-07-06', '2011-08-06', 'NaT'], dtype='datetime64[ns]', freq=None)
+```
+
+NaT(not a time)是pandas中时间戳数据的NA值
+
+> dateutil.parser是一个实用但不完美的工具，会把一些不是日期的字符串认作是日期(比如‘42’会被解析为2042年的今天)
+
+- datetime的格式定义
+  - %Y 4位数的年
+  - %y  2位的年
+  - %m  2位数的月 [01, 12]
+  - %d  2位数的日 [01, 31]
+  - %H  时（24小时制）[00,23]
+  - %I  时（12小时制）[01,12]
+  - %M 2位数的分[00, 59]
+  - %S  秒[00,61] （秒60和61用于闰秒）
+  - %w 用整数表示的星期几[0(星期天)，6]
+  - %U 每年的第几周[00,53],星期天被认为是每周的第一天，每年第一个星期天之前的几天被认为是-==第零周==
+  - %W 每年的第几周[00,53],星期一被认为是每周的第一天，每年第一个星期一之前的几天被认为是==第零周==
+  - %z  以+HHMM或 - HHMM表示的UTC时区偏移量，如果时区为naive,则返回空字符串
+  - %F  %Y-%m-%d简写形式，例如2012-4-18
+  - %D  %m/%d/%y简写形式，例如04/18/12
+
+datetime对象还有一些特定于当前环境的格式化选项，特定于当前环境的日期格式：
+
+- %a  星期几的简写
+- %A  星期几的全称
+- %b 月份的简写
+- %B 月份的全称
+- %c 完整的日期和时间，如"Tue 01 May 2012 04:20:57 PM"
+- %p 不同环境中的AM或PM
+- %x 适合于当前环境的日期格式，在美国’may 1,2011‘会产生’05/01/2011‘
+- %X  适用于当前环境的日期，例如 ’04:24:12 PM‘
+
+### 时间序列基础
+
+pandas最基本的时间序列类型就是时间戳为所有的Series:
+
+```python
+from datetime import datetime
+dates = [datetime(2011,1,2),datetime(2011,1,5),datetime(2011,1,7),
+        datetime(2011,1,8),datetime(2011,1,10),datetime(2011,1,12)]
+ts = pd.Series(np.random.random(6),index=dates)
+ts
+>>>
+2011-01-02    0.114773
+2011-01-05    0.284911
+2011-01-07    0.486732
+2011-01-08    0.388522
+2011-01-10    0.985110
+2011-01-12    0.913027
+dtype: float64
+    
+# datetime实际上是被放在一个DatetimeIndex中的，现在，变量ts就成为一个TimeSeries了
+type(ts)
+>>>pandas.core.series.Series
+ts.index
+>>>DatetimeIndex(['2011-01-02', '2011-01-05', '2011-01-07', '2011-01-08',
+               '2011-01-10', '2011-01-12'],
+              dtype='datetime64[ns]', freq=None)
+```
+
+> 没必要显式的实用TimeSeries的构造函数，当创建一个带有DatetimeIndex的Series时，pandas就会知道该对象是一个时间序列
+
+不同索引的时间序列之间的运算会自动对齐
+
+```python
+ts[::2]
+>>>
+2011-01-02    0.114773
+2011-01-07    0.486732
+2011-01-10    0.985110
+dtype: float64
+ts + ts[::2]
+>>>
+2011-01-02    0.229547
+2011-01-05         NaN
+2011-01-07    0.973464
+2011-01-08         NaN
+2011-01-10    1.970220
+2011-01-12         NaN
+dtype: float64
+```
+
+DatetimeIndex中的各个标量值是pandas的Timestamp对象
+
+```python
+ts.index[0]
+>>>Timestamp('2011-01-02 00:00:00')
+```
+
+#### 索引、选取、子集构造
+
+由于TimeSeries是Series的一个子类，所以在索引以及数据选取方面他们的行为是一样的
+
+```python
+ts
+>>>
+2011-01-02    0.114773
+2011-01-05    0.284911
+2011-01-07    0.486732
+2011-01-08    0.388522
+2011-01-10    0.985110
+2011-01-12    0.913027
+dtype: float64
+
+stamp = ts.index[2]
+ts[stamp]
+>>>0.486732
+```
+
+还有一种更为方便的用法，传入一个可以被解释为日期的字符串
+
+```python
+ts['1/10/2011']
+>>>
+0.9851101915711026
+```
+
+对于较长的序列，只需传入==‘年’或‘年月’==即可轻松选取数据的切片：
+
+```python
+# pd.date_range(start=None, end=None, periods=None, freq=None, tz=None, normalize=False, # name=None, closed=None, **kwargs)
+
+# freq : str or DateOffset, default 'D' (calendar daily)
+    
+longer_ts = pd.Series(np.random.random(1000),
+                     index = pd.date_range('1/2000',periods=1000))
+longer_ts[:5]
+>>>2000-01-01    0.053556
+2000-01-02    0.465195
+2000-01-03    0.651125
+2000-01-04    0.965837
+2000-01-05    0.129697
+Freq: D, dtype: float64
+
+longer_ts['2001/01'][:5]
+>>>
+2001-01-01    0.605849
+2001-01-02    0.301408
+2001-01-03    0.967744
+2001-01-04    0.722422
+2001-01-05    0.109395
+Freq: D, dtype: float64
+```
+
+通过日期切片的方式只对规则的Series有效
+
+```python
+ts[datetime(2011,1,7):]
+>>>
+2011-01-07    0.486732
+2011-01-08    0.388522
+2011-01-10    0.985110
+2011-01-12    0.913027
+dtype: float64
+```
+
+大部分时间序列数据都是按照时间先后排序的，也可以用不存在于该时间序列中的时间戳对其切片（==范围查询==）
+
+```python
+ts['1/6/2011':'1/11/2011']
+>>>
+2011-01-07    0.486732
+2011-01-08    0.388522
+2011-01-10    0.985110
+dtype: float64
+```
+
+跟之前一样，这里也可以传入字符串日期，datetime或Timestamp
+
+这样切片产生的是源时间序列的视图，跟Numpy数组的切片运算是一样的
+
+截取两个日期之间的TimeSeries
+
+```python
+a = ts.truncate(after='1/9/2011')
+a
+>>>
+2011-01-02    0.114773
+2011-01-05    0.284911
+2011-01-07    0.486732
+2011-01-08    0.388522
+dtype: float64
+```
+
+
 
 
 
