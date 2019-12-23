@@ -772,6 +772,28 @@ ___
 
 ![012](D:\project\pycon\web scrapy\img\012.PNG)
 
+page170
+
+
+
+### 4.2 Beautiful Soup
+
+是python的一个HTML和XML解析库，可以用来方便的提取数据
+
+自动将输入文档的转为Unicode编码，输出文档转为UTF-8，不需要考虑编码方式，除非原文档没有指定编码，此时说明下编码方式就可以了
+
+- 确认已经安装了Beautiful Soup 和 lxml
+- 解析时依赖解析器，除了支持python标准库的html外，还支持第三方的解析器如lxml
+
+Beautiful Soup支持的解析器
+
+|      |      |      |      |
+| ---- | ---- | ---- | ---- |
+|      |      |      |      |
+|      |      |      |      |
+|      |      |      |      |
+|      |      |      |      |
+
 
 
 
