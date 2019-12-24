@@ -776,6 +776,10 @@ page170
 
 
 
+
+
+page179
+
 ### 4.2 Beautiful Soup
 
 是python的一个HTML和XML解析库，可以用来方便的提取数据
@@ -787,12 +791,12 @@ page170
 
 Beautiful Soup支持的解析器
 
-|      |      |      |      |
-| ---- | ---- | ---- | ---- |
-|      |      |      |      |
-|      |      |      |      |
-|      |      |      |      |
-|      |      |      |      |
+| 解析器             | 使用                                 | 优势 | 劣势 |
+| ------------------ | ------------------------------------ | ---- | ---- |
+| python标准库       | BeautifulSoup(markup, 'html.parser') |      |      |
+| lxml   HTML 解析器 | BeautifulSoup(markup, 'lxml')        |      |      |
+| lxml  XML 解析器   | BeautifulSoup(markup, 'xml')         |      |      |
+| html5lib           | BeautifulSoup(markup, 'html5lib')    |      |      |
 
 
 
@@ -800,7 +804,13 @@ Beautiful Soup支持的解析器
 
 
 
+pg208
 
+## 第五章_数据存储
+
+保存数据的形式多种多样，最简单的形式是直接保存为文本文件，如txt,json,csv,还可以保存到数据库，如关系型数据库MySQL,非关系型数据库MongDB,Redis等
+
+### 5.1文件存储
 
 
 
