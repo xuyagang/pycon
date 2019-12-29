@@ -31,9 +31,7 @@ def upperName(self):
     print(self.name.upper())
 print('_'*7)
 print(upperName(x))
-
 rec.method = upperName
-
 x.method()
 y.method()
 rec.method(x)

@@ -6491,6 +6491,14 @@ class.methon(instance,args...)
 
 #### 调用超类构造函数
 
+类几乎就是命名空间，也就是定义变量名的工具，把数据和逻辑导出给客户端
+
+class是符合语句，任何种类的语句都可以位于其主体内，class语句运行时，语句内的所有语句都会执行
+
+
+
+方法一般是通过实例调用的，所有属性`__init__`方法是由继承查找的，在构造时，python只会找出并只调用一个`__init__`,如果要保证子类的构造函数也会执行超类的构造逻辑，一般都会通过类明确的调用超类的`__init__`
+
 ```python
 class Supper:
     def __inint__(self,x):
@@ -6499,6 +6507,64 @@ class Sub(Supper):
     def __init__(self,x,y):
         Supper.__init__(self,x)
         # default code
+```
+
+如果没有这样的调用，子类会完全取代超类的构造函数
+
+#### 继承
+
+在python中当对对象进行点号运算时，就会发生继承，而且涉及到了属性定义树，每次使用object.attr 的表达式时就会从头至尾搜索命名空间树，树中较低的定义会覆盖较高的定义，继承构成了专有化的基础
+
+#### 属性树的构造
+
+- 实例属性是由对方法内self的属性进行赋值而生成的
+- 类属性是通过class语句内的语句赋值而生成
+- 超类的连接是通过class语句首行的括号内列处类而生成的
+
+![16](D:\project\pycon\Python_学习手册\img\16.jpg)
+
+#### 类接口技术
+
+扩展只是一种与超类接口的方式
+
+- super:定义一个method函数以及在子类中期待一个动作的delegate
+- Inheritor:没有提供任何新的变量名，获得super中定义的一切内容
+- replacer:用自己的版本覆盖super的method
+- extender:覆盖并回调默认方法，从而定制super的方法
+- provider:实现super的delegage方法预期的action
+
+```python
+class Super:
+    def method(self):
+        print('in Super.method')
+    def delegate(self):
+        # 超类中可以有未定义的方法，可用于调用继承类中的方法
+        self.action()
+
+class Inheritor(Super):
+    pass
+
+class Replacer(Super):
+    def method(self):
+        print('in Replacer.method')
+    
+class Extender(Super):
+    def method(self):
+        print('starting Extender.method')
+        Super.method(self)
+        print('Ending Extender.method')
+
+class Provider(Super):
+    def action(self):
+        print('in Provider.action')
+
+if __name__ == '__main__':
+    for klass in (Inheritor, Replacer, Extender):
+        print('\n' + klass.__name__ + '...')
+        klass().method()
+        print('\nProvider ...')
+        x = Provider()
+        x.delegate()
 ```
 
 
@@ -6536,12 +6602,6 @@ class Sub(Supper):
 
 
 
-
-
-
-### 
-
-### 
 
 ### 第二十九章_运算符重载
 

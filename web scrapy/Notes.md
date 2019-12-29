@@ -778,7 +778,7 @@ page170
 
 
 
-page179
+
 
 ### 4.2 Beautiful Soup
 
@@ -791,12 +791,23 @@ page179
 
 Beautiful Soup支持的解析器
 
-| 解析器             | 使用                                 | 优势 | 劣势 |
-| ------------------ | ------------------------------------ | ---- | ---- |
-| python标准库       | BeautifulSoup(markup, 'html.parser') |      |      |
-| lxml   HTML 解析器 | BeautifulSoup(markup, 'lxml')        |      |      |
-| lxml  XML 解析器   | BeautifulSoup(markup, 'xml')         |      |      |
-| html5lib           | BeautifulSoup(markup, 'html5lib')    |      |      |
+| 解析器             | 使用                                 | 优势                                                  | 劣势                         |
+| ------------------ | ------------------------------------ | ----------------------------------------------------- | ---------------------------- |
+| python标准库       | BeautifulSoup(markup, 'html.parser') | 速度适中,容错能力强                                   | py2.7及3.2之前的版本容错力差 |
+| lxml   HTML 解析器 | BeautifulSoup(markup, 'lxml')        | 速度快，容错强                                        | 需安装c语言库                |
+| lxml  XML 解析器   | BeautifulSoup(markup, 'xml')         | 速度快，唯一支持xml                                   | 需安装c语言库                |
+| html5lib           | BeautifulSoup(markup, 'html5lib')    | 最好的容错性，以浏览器方式生成解析文档，生成html5文档 | 速度慢                       |
+
+lxml有解析 HTML和XML的功能，而且速度快，容错力强，推荐使用
+
+> 如果使用lxml,初始化Beautiful Soup时，把第二个参数改为lxml即可
+
+```python
+from bs4 import BeautifulSoup
+soup = BeatifulSoup('文本,'lxml')
+```
+
+page180
 
 
 
@@ -812,7 +823,56 @@ pg208
 
 ### 5.1文件存储
 
+#### txt 文本
 
+操作简单，几乎兼容任何平台，但不利于检索，如果对检索和数据结构要求不高，追求方便，可采用txt文本存储
+
+```python
+open方法第二个参数为a,代表追加写入
+写入完成，还需调用close()关闭文件对象
+```
+
+- 打开方式
+
+  r:只读，指针在开头（默认）
+
+  rb:二进制只读，指针在开头
+
+  r+:读写方式，指针在开头
+
+  rb+:二进制读写，指针在开头
+
+  w:写入方式，存在则覆盖，不存在则创建
+
+  wb:二进制写入，存在则覆盖，不存在则创建
+
+  w+:读写方式，存在则覆盖，不存在则创建
+
+  wb+:二进制读写，存在则覆盖，不存在则创建
+
+  a:追加打开，存在指针放结尾，不存在则创建
+
+  ab:二进制追加打开，存在指针放结尾，不存在则创建
+
+  a+:读写方式的追加，存在则指针放结尾，不存在则创建
+
+  ab+:二进制读写方式的追加，存在则指针放结尾，不存在则创建
+
+- 简化写法
+
+  ```python
+  with open() as file:
+      file write()
+  # 这样就不用调用close（）
+  ```
+
+#### Json 文件存储
+
+
+
+
+
+### 5.2 关系型数据库
 
 
 
