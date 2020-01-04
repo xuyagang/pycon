@@ -6489,6 +6489,12 @@ class.methon(instance,args...)
 
 ### 第二十八章_类代码编写细节
 
+#### class 语句
+
+和def一样，class语句是对象的创建者并且是一个隐含的赋值运算——执行时他会产生类对象，并把其引用值存储在前面所使用的变量名，class语句也是真正的可执行代码，直到python抵达并运行定义的class语句前，类不存在
+
+class语句是复合语句，class语句内，任何赋值语句都会产生类属性，而且还有特殊方法重载运算符，`__init__`函数会实例对象构造时调用，任何种类的语句都可位于class内，class语句自身运行时，class语句内的所有语句都会执行
+
 #### 调用超类构造函数
 
 类几乎就是命名空间，也就是定义变量名的工具，把数据和逻辑导出给客户端
@@ -6565,9 +6571,299 @@ if __name__ == '__main__':
         print('\nProvider ...')
         x = Provider()
         x.delegate()
+>>>
+Inheritor...
+in Super.method
+
+Provider ...
+in Provider.action
+
+Replacer...
+in Replacer.method
+
+Provider ...
+in Provider.action
+
+Extender...
+starting Extender.method
+in Super.method
+Ending Extender.method
+
+Provider ...
+in Provider.action
 ```
 
+#### 命名空间
 
+- 无点号运算的变量名与作用阈相对应
+- 点号的属性名使用的是对象的命名空间
+- 有些作用域会对对象的命名空间进行初始化
+
+##### 简单变量名:如果赋值就不是全局变量
+
+赋值语句使变量成为本地变量，在当前作用域内创建或改变变量名X，除非声明它是全局变量
+
+引用：先在当前作用域搜索变量名，之后是在所有的嵌套函数中搜索，然后是在当前的全局作用域中搜索，最后在内置的作用域搜索
+
+##### 属性名称：对象命名空间
+
+点号的属性名指的是特定对象的属性，并且遵循模块和类的规则
+
+赋值语句，在进行点号运算的对象的命名空间创建或修改属性，继承树的搜索只发生在属性引用时，而不是属性的赋值运算时
+
+引用：使用继承搜索流程
+
+##### 命名空间的”禅“，赋值将变量名分类
+
+赋值变量的场所决定了变量名所在的作用域或对象
+
+```python
+# global name/attribute
+x = 11
+def f():
+    # access global x
+    print(x)
+def g():
+    # local variable
+    x = 22
+    print(x)
+class C:
+    # class attribute
+    x = 33
+    def m(self):
+        # local variable in method
+        x = 44
+        # instance attribute
+        self.x = 55
+
+if __name__ == '__main__':
+    print(x)
+    f()
+    g()
+    print(x)
+
+    obj = C()
+    print(obj.x)
+
+    # obj.m()
+    print(obj.x)
+    print(C.x)
+'''
+11
+11
+22
+11
+33
+33
+33
+'''
+```
+
+可以通过类来读取其属性，但无法从def语句外读取函数或方法内的局部变量，局部变量对def内的其余代码可见，只有当函数调用或执行时，才会存在于内存中
+
+##### 命名空间字典
+
+模块的命名空间是以字典的形式实现的，并且可以由内置属性`__dict__`显示着一点
+
+属性点号运算内部是字典的索引运算，而属性继承就是搜索连接的字典而已
+
+实例和类对象就是带有连接的字典而已，python暴露这些字典，还有字典间的链接，以便在高级角色中使用
+
+```python
+class super:
+    def hello(self):
+        self.data1 = 'spam'
+        
+class sub(super):
+    def hola(self):
+        self.data2 = 'eggs'
+
+x = sub()
+x.__dict__
+>>>{}
+# __class__功能和type()函数一样，都是查看对象所在的类
+x.__class__
+>>>__main__.sub
+__class__功能和type()函数一样，都是查看对象所在的类sub.__bases__
+>>>(__main__.super,)
+super.__bases__
+>>>(object,)
+```
+
+属性会位于实例的属性命名空间内，而不是类的，实例对象的命名空间保存了数据，随实例的不同而不同
+
+==self是进入命名空间的钩子==
+
+```python
+y = sub()
+x.hello()
+x.__dict__
+>>>
+{'data1': 'spam'}
+x.hola()
+x.__dict__
+>>>{'data1': 'spam', 'data2': 'eggs'}
+sub.__dict__.keys()
+>>>dict_keys(['__module__', 'hola', '__doc__'])
+super.__dict__.keys()
+>>>dict_keys(['__module__', 'hello', '__dict__', '__weakref__', '__doc__'])
+y.__dict__
+>>>{}
+```
+
+每个实例都有独立的命名空间字典，一开始是空的，可以记录于同一个类的其他实例命名空间字典完全不同的属性
+
+属性实际上是python的字典键，所以有两种方式对其读取和赋值：==通过点号运算或者通过键索引运算==
+
+```python 
+x.data1,x.__dict__['data1']
+>>>('spam', 'spam')
+x.data3 = 'toast'
+x.__dict__
+>>>{'data1': 'spam', 'data2': 'eggs', 'data3': 'toast'}
+x.__dict__['data3'] = 'ham'
+x.__dict__
+>>>{'data1': 'spam', 'data2': 'eggs', 'data3': 'ham'}
+```
+
+这种等效关系只适用于附加在实例上的属性
+
+属性点号可以存取命名空间字典索引无法读取的属性，例如继承属性 x.hello 无法由`x.__dict__['hello']`读取
+
+###### dir能用在任何带有属性的对象上
+
+dir(object) 类似于 `object__dict__.keys()`调用，dir会排序其列表并引入一些系统属性，python3中包含了从所有类的隐含超类继承的名称
+
+```python
+list(x.__dict__.keys())
+>>>['data1', 'data2', 'data3']
+dir(x)
+>>>['__class__',
+......
+ '__weakref__',
+ 'data1',
+ 'data2',
+ 'data3',
+ 'hello',
+ 'hola']
+```
+
+##### 命名空间链接
+
+`__class__ 和 __bases__`可以在程序代码内查看继承层次，可以使用他们来显示类树
+
+`__name__` 在自己用时就是 main，当自己作为模块被调用时就是自己的名字
+
+`__bases__`列出其基类
+
+`__class__`功能和type()函数一样，都是查看对象所在的类
+
+```python
+'''
+Climb inheritance trees using namespace links,
+displaying higher superclasses with indentation
+'''
+
+def classtree(cls, indent):
+    print('.' * indent + cls.__name__)
+    # 遍历类的基类
+    for supercls in cls.__bases__:
+        classtree(supercls, indent + 3)
+
+def instancetree(inst):
+    print('Tree of %s' % inst)
+    classtree(inst.__class__, 3)
+
+def selftest():
+    class A:        pass
+    class B(A):     pass
+    class C(A):     pass
+    class D(B,C):   pass
+    class E:        pass
+    class F(D,E):   pass
+    instancetree(B())
+    instancetree(F())
+
+if __name__ == '__main__':
+    selftest()
+
+'''
+Tree of <__main__.selftest.<locals>.B object at 0x000001D27B3D5B70>
+...B
+......A
+.........object
+Tree of <__main__.selftest.<locals>.F object at 0x000001D27B3D5B70>
+...F
+......D
+.........B
+............A
+...............object
+.........C
+............A
+...............object
+......E
+.........object
+'''
+```
+
+##### 文档字符串
+
+文档字符串是出现在各种结构的顶部的字符串常量，在`__doc__`属性自动保存，适用于模块文件，函数定义，以及类和方法
+
+```python
+# docstr.py
+'I am: docstr.__doc__'
+
+def func(args):
+    'I am: docstr.func.__doc__'
+    pass
+class spam:
+    'I am: spam.__doc__ or docstr.spam.__doc__'
+    def method(self, args):
+        'I am: spam.method.__doc__ or self.method.__doc__'
+        pass
+```
+
+```pyton
+import docstr
+
+>>> docstr.__doc__
+'I am: docstr.__doc__'
+>>> docstr.func.__doc__
+'I am: docstr.func.__doc__'
+>>> docstr.spam.__doc__
+'I am: spam.__doc__ or docstr.spam.__doc__'
+>>> docstr.spam.method.__doc__
+'I am: spam.method.__doc__ or self.method.__doc__'
+```
+
+文档字符串在运行时可用，语法上比 # 号注释缺乏灵活性
+
+- 针对功能性文档（对象做什么）使用文档字符串
+- 对更加微观的文档，使用 # 注释
+
+#### 类与模块的关系
+
+模块
+
+- 是数据/逻辑包
+- 通过编写python文件或c扩展来创建
+- 通过导入来使用
+
+类
+
+- 实现新的对象
+- 由class语句创建
+- 通过调用使用
+- 位于一个模块中
+
+#### 小结
+
+- 抽象类是会调用方法的类，没有继承或定义该方法，而是期待该方法由子类填补，当行为无法预测，得等到更为具体的子类编写时才知道，通常可以使用这种方式把类通用化，
+- 简单语句（x = y）出现在类语句顶端时，会把数据属性附加在这个类上（class.x）,会由所有的实例共享
+- 当类定义自己的`__init__`函数，但也必须启用超类构建其代码，就必须手动调用超类的`__init__`方法，python只会自动执行一个构造函数（树中最低的那个），超类的构造函数是通过类名称来调用，手动传入self实例 ：`superclass.__init__(self, ...)`
+
+- 要增强继承的方法而不是完全替代，还得在子类中重新定义，但要从子类的新版方法中手动回调超类版本的方法，也就是把self实例手动传给超类的这个方法：`superclass.method(self,...)`
 
 
 

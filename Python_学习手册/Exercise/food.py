@@ -1,1 +1,13 @@
-var =
+var = 1
+def fun():
+    ...
+
+class spam:
+    ...
+
+class ham:
+    ...
+
+class eggs:
+    ...
+
