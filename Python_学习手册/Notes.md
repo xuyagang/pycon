@@ -6544,7 +6544,7 @@ class Super:
     def method(self):
         print('in Super.method')
     def delegate(self):
-        # 超类中可以有未定义的方法，可用于调用继承类中的方法
+        # 超类中可以有未定义的方法，继承类可调用此方法来激活自己定义的函数
         self.action()
 
 class Inheritor(Super):
@@ -6571,6 +6571,11 @@ if __name__ == '__main__':
         print('\nProvider ...')
         x = Provider()
         x.delegate()
+        # Provider 调用 delegate方法时，由两个独立的继承搜索发生：
+        # 1.在x.delegate调用中，python会搜索provider实例和它上层的对象，知道在super中找到
+        # delegate方法，实例会传递给该方法self参数
+        # 2.在super.delegate方法中，self.action会对self以及它上层的对象启动搜索，因为self
+        # 指的是provider实例，在provider子类中就会找到action方法
 >>>
 Inheritor...
 in Super.method
@@ -6592,6 +6597,20 @@ Ending Extender.method
 Provider ...
 in Provider.action
 ```
+
+#### 抽象超类
+
+```python
+Provider 调用 delegate方法时，由两个独立的继承搜索发生：
+1.在x.delegate调用中，python会搜索provider实例和它上层的对象，知道在super中找到
+delegate方法，实例会传递给该方法self参数
+2.在super.delegate方法中，self.action会对self以及它上层的对象启动搜索，因为self
+指的是provider实例，在provider子类中就会找到action方法
+```
+
+这种‘填空’ 的代码结构一般就是OOP的软件框架
+
+从delegage的角度，这个例子中的超类也称作是抽象超类——==类的部分默认行为由其子类提供==（如果预期的方法没有在子类中定义，当继承搜索失败时，会引发未定义变量名异常）
 
 #### 命名空间
 
@@ -6865,41 +6884,73 @@ import docstr
 
 - 要增强继承的方法而不是完全替代，还得在子类中重新定义，但要从子类的新版方法中手动回调超类版本的方法，也就是把self实例手动传给超类的这个方法：`superclass.method(self,...)`
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 ### 第二十九章_运算符重载
+
+#### 基础知识
+
+实际上__运算符重载__只是意味着在类方法中__拦截__内置的操作,当类实例出现在内置操作中，python会自动调用你的方法，并且你的方法的返回值变成了相应操作的结果
+
+- 运算符重载让类拦截常规的python运算
+- 类可以重载所有的python表达式运算符
+- 类可以重载打印，函数调用，属性点号运算等内置运算
+- 重载使类实例的行为像内置类型
+- 重载是通过提供特殊名称的类方法实现的
+
+当类中提供了某个特殊名称的方法，在该类出现在他们相关的表达式时，python会自动调用他们
+
+##### 构造函数和表达式：`__init__和__sub__`
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 ### 第三十章_类的设计
 

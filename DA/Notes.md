@@ -3097,7 +3097,41 @@ data.rename(index={'OHIO': 'INDIANA'}, inplace=True)
 离散化和面元划分 ：就是分组，进行相应的计算
 
 1. 对于数据进行离散化和面元划分的前提条件是：连续变化的数据
+
 2. 例如下面是一组人的年龄数据，现在要按照年龄划分为不同年龄的4组,需要使用pandas的==cut==函数
+
+   > pandas.cut(x,bins,right=True,labels=None,retbins=False,precision=3,include_lowest=False)
+   >
+   >      参数说明:
+   >
+   > x    : 进行划分的一维数组
+   >
+   >      bins : 1,整数---将x划分为多少个等间距的区间
+   >          In[1]:pd.cut(np.array([0.2,1.4,2.5,6.2,9.7,2.1]),3,retbins=True)
+   >
+   >    Out[1]: ([(0.19, 3.367], (0.19, 3.367], (0.19, 3.367], (3.367,6.533], (6.533,9.7], (0.19, 3.367]] Categories (3, interval[float64]): [(0.19,3.367] < (3.367, 6.533] < (6.533, 9.7]],array([ 0.1905    , 3.36666667,  6.53333333,  9.7 ]))
+   >
+   >               2,序列—将x划分在指定的序列中，若不在该序列中，则是NaN
+   >     
+   >            In[2]:pd.cut(np.array([0.2,1.4,2.5,6.2,9.7,2.1]),[1,2,3],retbins=True)
+   >     
+   >           Out[2]: ([NaN, (1, 2], (2, 3], NaN, NaN, (2, 3]] Categories(2, interval[int64]): [(1, 2] < (2, 3]], array([1, 2, 3]))
+   >     
+   >      right : 是否包含右端点
+   >     
+   >      labels : 是否用标记来代替返回的bins
+   >     
+   >           In[3]:pd.cut([1,2,3,4],4,labels=['one','two','three','four'])
+   >     
+   >           Out[3]: [one, two, three, four]Categories (4, object): [one <two < three < four] retbins: 是否返回间距bins
+   >     
+   >      precision: 精度
+   >     
+   >      include_lowest:是否包含左端点
+   >
+   >
+   >      返回值:
+   >      如果retbins = False 则返回x中每个值对应的bin的列表，否者则返回x中每个值对应的bin的列表和对应的bins
 
 ```python
 pd.value_counts(cats)
