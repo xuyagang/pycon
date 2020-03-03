@@ -350,7 +350,7 @@ Python 2 中，有 urllib 和 urllib2 两个库来实现请求的发送。 而�
 
   对于get请求，如果要附加额外的信息，一般有两种方式：
 
-  - 之间附加到链接中`r = requests.get('http://httpbin.org/get?name=adam&age=22')`
+  - 直接附加到链接中`r = requests.get('http://httpbin.org/get?name=adam&age=22')`
 
   - 参数方式添加
 
@@ -963,12 +963,6 @@ print(result)
 
 
 
-
-
-
-
-
-
 ### 4.2 Beautiful Soup
 
 是python的一个HTML和XML解析库，可以用来方便的提取数据
@@ -977,7 +971,7 @@ print(result)
 
 自动将输入文档的转为Unicode编码，输出文档转为UTF-8，不需要考虑编码方式，除非原文档没有指定编码，此时说明下编码方式就可以了
 
-- 确认已经安装了Beautiful Soup 和 lxml
+- 确认已经安装了==Beautiful Soup 和 lxml==
 - 解析时依赖解析器，除了支持python标准库的html外，还支持第三方的解析器如lxml
 
 Beautiful Soup支持的解析器
@@ -993,20 +987,345 @@ lxml有解析 HTML和XML的功能，而且速度快，容错力强，推荐使�
 
 > 如果使用lxml,初始化Beautiful Soup时，把第二个参数改为lxml即可
 
-```python
-from bs4 import BeautifulSoup
-soup = BeatifulSoup('文本,'lxml')
-```
+#### 6.方法选择器
 
-page180
+-  find_all()  find()
 
+  find_all(tag, attributes, recursive, text, limit, keywords)
 
+  find_all（标签、属性、递归、文本、限制、关键词）
 
+  find(tag, attributes, recursive, text, keywords)
 
+  **find_all会将所有满足条件的值取出，组成一个list**
 
+  > find与find_all的区别，find只会取符合要求的第一个元素，find_all会根据范围限制参数limit限定的范围取元素（默认不设置代表取所有符合要求的元素，find 等价于 find_all的 limit =1 时的情形）
 
+  - attributes
 
-pg208
+    用字典封装一个标签的若干属性和对应的属性值
+
+  - 递归recursive
+
+    > recursive 设置为 True， find_all 就会根据你的要求去查找标签参数的所有子标签，以及标签的子标签。如果 recursive 设置为 False， find_all 就只查找文档的一级标签。 find_all默认是支持递归查找的（recursive 默认值是 True）；一般情况下这个参数不需要设置，非你真正了解自己需要哪些信息，而且抓取速度非常重要，那时你可以设置递归参数
+
+  - keywords
+
+    > - 关键词参数 keyword，自己选择那些具有指定属性的标签
+    >
+    > - 如果是class、id等参数，用keywords 或者attributes用法一样，如果是一些其他参数，则用keywords
+
+#### 7.css选择器
+
+使用 css 选择器时，只需要调用 select（）方法，传人相应的 css 选择器即可
+
+- 嵌套选择
+
+  select（）方法同样支持嵌套选择。 例如，先选择所有 ul 节点，再遍历每个 ul 节点，选择其 li 
+
+- 获取属性
+
+  ```python
+  # 直接传入中括号和属性名，以及通过 attrs 属性获取属性值，都可以
+  for ul in soup.select('ul'):
+      print(ul.attrs['id'])
+      # 等价于
+      print(ul['id'])
+  ```
+
+- 获取文本
+
+  ```python
+  # 可以用string属性，也可以使用get_text()方法
+  for li in soup.select('li'):
+      print('Get Text:', li.get_text())
+      print('String:', li.string)
+  ```
+
+  string 是==属性==，get_text()是==方法==
+
+### 4.3 Pyquery
+
+Beautifulsoup的css选择器功能没那么强大，如果喜欢css选择器，并对jQuery有所了解，可以尝试Pyquery
+
+pyquery库是jQuery的Python实现，能够以jQuery的语法来操作解析 HTML 文档，易用性和解析速度都很好，和它差不多的还有BeautifulSoup，都是用来解析的。相比BeautifulSoup完美翔实的文档，虽然PyQuery库的文档弱爆了， 但是使用起来还是可以的
+
+1. 准备工作
+
+   ```python 
+   # pip 安装
+   pip3 install pyquery
+   
+   # 验证安装,导入无错误则安装成功
+   import pyquery
+   ```
+
+2. 初始化
+
+   类似beautifulsoup, pyquery 也需要传入html文本来初始化一个Pyquery对象
+
+   - 字符串初始化
+
+     ```python
+     html = '''
+     <div>
+         <ul>
+              <li class="item-0">first item</li>
+              <li class="item-1"><a href="link2.html">second item</a></li>
+              <li class="item-0 active"><a href="link3.html"><span class="bold">third item</span></a></li>
+              <li class="item-1 active"><a href="link4.html">fourth item</a></li>
+              <li class="item-0"><a href="link5.html">fifth item</a></li>
+          </ul>
+      </div>
+     '''
+     from pyquery import PyQuery as pq
+     # 初始化字符串
+     doc = pq(html)
+     # 连接css选择器
+     print(len(doc('li')))
+     ```
+
+   - URL初始化
+
+     初始化的参数不仅可以以字符串的形式传递，还可以传入网页的url
+
+     ```python
+     from pyquery import PyQuery as pq
+     doc = pq(url='http://cuiqingcai.com',encoding='utf-8')
+     print(doc('title'))
+     ```
+
+   - 文件初始化
+
+     还可以传递本地的文件名， 此时将参数指定为 filename 即可 
+
+     ```python
+     from pyquery import PyQuery as pq
+     doc = pq(filename='demo.html')
+     ```
+
+3. 基本css选择器
+
+   ```python
+   from pyquery import PyQuery as pq
+   doc = pq(html)
+   # 选取id为container的节点，然后选取class为list的节点内部的li
+   print('css 选择器',doc('#container .list li'))
+   ```
+
+4. 查找节点
+
+   查找子节点使用find()方法，
+
+   ```python
+   # 子节点
+   items = doc('.list')
+   print('items:', items)
+   lis = items.find('li')
+   print('lis:',lis)
+   
+   # 如果要选取子节点中符合条件的节点，可以使用children()方法
+   # 选出子节点中 class 为 active 的节点
+   lis = items.children('.active')
+   print('children:', lis)
+   
+   # 父节点
+   # 使用parent()获取某个节点的父节点
+   doc = pq(html)
+   items = doc('.list')
+   # 获取直接父节点 parent()
+   container = items.parent()
+   print('container:', container)
+   print(type(container))
+   
+   # 获取祖先节点 parents()
+   # parents（）方法会返回所有的祖先节点
+   parents = items.parents()
+   print('parents:',parents)
+   # 如果要选择某个祖先节点，可以像parents()传入css选择器
+   parent = items.parents('.wrap')
+   print('parent:', parent)
+   
+   # 兄弟节点
+   # 获取兄弟节点可使用siblings()方法
+   from pyquery import PyQuery as pq
+   doc = pq(html)
+   li = doc('.list .item-0.active')
+   print('siblings:',li.siblings())
+   # 获取特定的siblings,可以像其传入css选择器
+   # 先获取class='item-0'且class='active'的节点
+   li = doc('.list .item-0.active')
+   print('li:', li)
+   # 获取特定兄弟节点
+   print(li.siblings('.active'))
+   ```
+
+5. 遍历
+
+   pyquery的选择结果可能是多个节点，也可能是单个节点，类型都是pyquery类型
+
+   - 对于单个节点，可以直接打印输出，也可以转为字符串
+
+   ```python
+   # 对于单个节点
+   doc = pq(html)
+   li = doc('.item-0.active')
+   print('li:', li)
+   print(str(li))
+   ```
+
+   - 对于多个节点的结果，需要遍历来获取,需要调用items()方法
+
+     ```python
+     doc = pq(html)
+     # 生成器对象-generator
+     lis = doc('li').items()
+     print(type(lis))
+     for li in lis: 
+         print(li, type(li))
+     ```
+
+6. 获取信息
+
+   提取节点后需要获取信息，主要有两种，属性和文本
+
+   - 获取属性
+
+     ```python
+     doc = pq(html)
+     a = doc('.item-0.active a')
+     print(a, type(a))
+     # 调用attr()方法获取属性
+     print(a.attr('href'))
+     # 调用attr属性获取属性
+     print(a.attr.href)
+     
+     # 选中的是单个多个元素时
+     a = doc('a')
+     print("#" * 9)
+     print(len(a))
+     print(a.attr('href'))
+     
+     # 选中的是多个多个元素时
+     # 多个元素调用attr()方法时，返回一个结果，得到第一个节点属性
+     # 如果要获取所有 a 节点属性，需要用遍历
+     
+     # 使用pyquery选择得到的节点不管是单个还是多个，
+     # 类型都是<class 'pyquery.pyquery.PyQuery'>。
+     
+     # 如果得到的是多个节点的对象，则需要进行遍历来获取单个节点对象，
+     # 这时要注意不能直接遍历多个节点对象，而是要调用多节点对象的items()方法
+     for item in a.items():
+         print(item.attr.href)
+     ```
+
+   - 获取文本
+
+     ```python
+     # 使用text()函数实现,获取节点内部文本
+     doc = pq(html)
+     a = doc('.item-0.active a')
+     print(a.text())
+     
+     # 获取节点html文本,使用 html()方法
+     li = doc('.item-0.active')
+     print('li:', li)
+     print(li.html())
+     
+     # 如果选中多个节点，text() 或 html() 会返回什么内容？
+     li = doc('li')
+     print('li_html:', li.html())
+     print('li_text:', li.text())
+     # html()方法返回了第一个li节点的内部HTML文本
+     # text()方法返回了所有的li节点内部的纯文本，之间用空格割开，即是一个字符串
+     ```
+
+7. 节点操作
+
+   ```python
+   # 对某个节点添加一个class,移除某个节点等
+   # 节点方法较多，举几个典型
+       # addClass 和 removeClass ,动态改变节点的class属性
+      
+   from pyquery import PyQuery as pq
+   doc = pq(html)
+   li = doc('.item-0.active')
+   print('原始的：',li)
+   li.removeClass('active')
+   print('移除的：',li)
+   li.addClass('active')
+   print('增加的：',li)
+   '''
+   原始的： <li class="item-0 active"><a href="link3.html"><span class="bold">third item</span></a></li>
+   移除的： <li class="item-0"><a href="link3.html"><span class="bold">third item</span></a></li>
+   增加的： <li class="item-0 active"><a href="link3.html"><span class="bold">third item</span></a></li>
+   '''
+   
+   # attr, text, html
+   # attr() 对属性操作
+   # text() 和 html() 改变节点内部内容
+   from pyquery import PyQuery as pq
+   doc = pq(html)
+   li = doc('.item-0.active')
+   print(li)
+   # 修改属性(属性名，属性值)，添加属性
+   li.attr('name','link')
+   print(li)
+   # 修改节点内部内容
+   li.text('changed item')
+   print(li)
+   # html()方法传入HTML文本后，li节点内部又变为传入的html了
+   li.html('<span>changed item</span>')
+   
+   
+   # remove
+   # 移除操作
+   html = '''
+   <div class="wrap">
+       Hello, World
+       <p>This is a paragraph.</p>
+    </div>
+   '''
+   doc = pq(html)
+   wrap = doc('.wrap')
+   print(wrap.text())
+   
+   # 移除p节点内的文本
+   # 选择p节点，然后移除
+   wrap.find('p').remove()
+   print(wrap.text())
+   # 其他类似的方法：append(), empty(), prepend()
+   ```
+
+8. 伪类选择器
+
+   css选择器之所以强大，是因为它支持多种多样的伪类选择器，例如：选择第一个节点、最后一个节点、奇偶数节点、包含某一文本的节点
+
+   ```python
+   from pyquery import PyQuery as pq
+   doc = pq(html)
+   print('伪类选择器：')
+   # 第一个节点
+   li = doc('li:first-child')
+   print(li,end='\n')
+   # 最后一个节点
+   li = doc('li:last-child')
+   print(li)
+   # 第二个li节点
+   li = doc('li:nth-child(2)')
+   print(li)
+   # 第三个之后的
+   li = doc('li:gt(2)')
+   print(li)
+   # 偶数位置
+   li = doc('li:nth-child(2n)')
+   print(li)
+   # 包含特定文本的
+   li = doc('li:contains(second)')
+   print(li)
+   ```
+
+   
 
 ## 第五章_数据存储
 
@@ -1059,17 +1378,615 @@ open方法第二个参数为a,代表追加写入
 
 #### Json 文件存储
 
+---
+
+json.dumps()
+
+- sort_keys是告诉编码器按照字典key排序(a到z)输出
+
+  ```python
+  >>> import json
+  >>> data = [{'c': 'C', 'b':(1, 6), 'a': 'A'}]
+  >>> print(data)
+  [{'a': 'A', 'c': 'C', 'b': (1, 6)}]
+  >>> print(json.dumps(data,sort_keys=True))
+  [{"a": "A", "b": [1, 6], "c": "C"}]
+  ```
+
+- indent参数根据数据格式缩进显示，读起来更加清晰, indent的值，代表缩进空格式
+
+  ```python
+  >>> print(json.dumps(data,sort_keys=True))
+  [{"a": "A", "b": [1, 6], "c": "C"}]
+  >>> print(json.dumps(data,sort_keys=True,indent=4))
+  [
+      {
+          "a": "A", 
+          "b": [
+              1, 
+              6
+          ], 
+          "c": "C"
+      }
+  ]
+  ```
+
+- separators参数的作用是去掉‘，’ ‘：’后面的空格，在传输数据的过程中，越精简越好，冗余的东西全部去掉
+
+  ```PYTHON
+  >>> print(json.dumps(data,sort_keys=True))
+  [{"a": "A", "b": [1, 6], "c": "C"}]
+  >>> print(json.dumps(data,sort_keys=True,separators=(',',':')))
+  [{"a":"A","b":[1,6],"c":"C"}]
+  ```
+
+- skipkeys参数，在encoding过程中，dict对象的key只可以是string对象，如果是其他类型，那么在编码过程中就会抛出ValueError的异常。skipkeys可以跳过那些非string对象当作key的处理
+
+  ```python
+  print(json.dumps(data2, separators=(',', ':')))
+  >>>TypeError: keys must be str, int, float, bool or None, not tuple
+  print(json.dumps(data2, separators=(',', ':'), skipkeys=True))
+  >>>[{"a":"A","b":[1,6],"c":"C"}]
+  ```
+
+- 输出真正的中文需要指定ensure_ascii=False
+
+  json.dumps 序列化时对中文默认使用的ascii编码，处理中文是会出现乱码，
+
+  ```python
+  >>> print(json.dumps('中国'))
+  "\u4e2d\u56fd"
+  >>> print(json.dumps('中国',ensure_ascii=False))
+  "中国"
+  ```
+
+---
 
 
 
+- 对象和数组
+
+  javaScript object notation 语言中，一切都是对象，任何支持的类型都可通过JSON来表示，例如字符串、数字、对象、数组等
+
+  对象和数组是特殊且常用的
+
+  - 对象：使用{ } 包裹起来的key:value键值对，键名可使用整数和字符串，值可以是任意类型
+  - 数组：使用[] 包裹起来的['java', 'vb',...] 索引结构，值可以是任意类型
+
+  json可由以上两种自由组合而成，可无限嵌套，结构清晰，是数据交换极佳方式
+
+- 读取JSON
+
+  - loads() 将json文本转为json对象
+
+  - dumps() 将json对象转为文本字符串
+    - 获取键值时有两种方式：
+
+      - 中括号加键名
+
+      - get()方法传入键名
+
+        如果键名不存在，不会报错，会返回none
+
+        get()方法可传入==第二个参数，即默认值==
+
+- 输出JSON
+
+  利用dumps方法将json对象转为字符串，然后调用 write() 方法写入文本
+
+  ```python
+  with open('data.json','w') as file:
+      file.write(json.dumps(data))
+  ```
+
+  JSON的数据需要用双括号来包围，不能使用单引号，否则 loads() 会解析失败
+
+  - 写入数据中有中文
+
+    ```python
+    import json
+    
+    data = [{
+        'name': '王伟',
+        'gender': '男',
+        'birthday': '1992-10-18'
+    }]
+    with open('json_dumps_data.json', 'w') as file:
+        file.write(json.dumps(data))
+    # 写入的结果
+    '''
+    [{"name": "\u738b\u4f1f", "gender": "\u7537", "birthday": "1992-10-18"}]
+    '''
+    # 中文的字符都变成了Unicode字符，并不是我们要的结果
+    # 为了正常输出中文，还需要指定参数 ensure_ascii = False ,还要指定文件输出的编码
+    with open('json_dumps_data.json','w', encoding='utf-8') as file:
+        file.write(json.dumps(data, indent=2, ensure_ascii=False))
+    ```
+
+#### csv  文件存储
+
+csv 全称 comma-separated values
+
+中文叫做逗号分隔值或字符分隔值，文件以纯文本形式存储表格数据
+
+文件是字符序列，可以由任意数目的记录组成，记录间以某种换行符分隔
+
+每条记录由字段组成，字段间的分隔符是其他字符或字符串，常见的是逗号或制表符 
+
+- 写入
+
+  - 单行，多行列表
+
+    - writer = ==csv.writer==(csvfile)
+      - writer.==writerow==(['id','name','age'])
+      - writer.==writerows==([['10001','Mike',20], ['10002','Bob', 22]])
+
+  - 写入字典对象
+
+    - writer = csv.DictWriter(csvfile)
+      - writer.writerow()
+
+  - pandas写入
+
+    - to_csv()
+
+    ```python
+    import pandas as pd
+    df = pd.Dataframe(data)
+    df.to_csv('test.csv',header=True, index=True)
+    ```
+
+  单行，多行列表例子：
+
+  ```python
+  # 修改列与列之间的分隔符，可以传入 delimiter 参数
+  with open('./exercise/csv_data.csv','w') as csvfile:
+      # 定义写入对象
+      writer = csv.writer(csvfile, delimiter=' ')
+      # 调用 writerow（）方法传入每行的数据即可完成写入
+      writer.writerow(['id', 'name', 'age'])
+  
+  # 以调用 writerows（）方法同时写入多行, 此时参数就需要为二维列表
+  with open('./exercise/data.csv','w') as csvfile:
+      # 创建对象
+      writer = csv.writer(csvfile)
+      # 写入头部
+      writer.writerow(['id','name','age'])
+      # 写入数据
+      writer.writerows([['10001','Mike',20], ['10002','Bob', 22]])
+  ```
+
+  字典对象例子：
+
+  ```python
+  import csv
+  # 追加写入 with open('./exercise/data_.csv', 'w') as csvfile:
+  with open('./exercise/data_.csv', 'w') as csvfile:
+      # 头部
+      fieldnames = ['id', 'name', 'age']
+      # 写入对象
+      writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+      # 写入头部
+      writer.writeheader()
+      # 写入数据
+      writer.writerow({'id': '10001', 'name': 'Mike', 'age': 10})
+      writer.writerow({'id':'10002 ', 'name': 'Bob', 'age': 22}) 
+  ```
+
+- 读取
+
+  - csv读取数据
+
+    - 对打开的文件使用csv库的 ==reader== 构造读取对象
+    - 如果csv文件中包含==中文==，需要指定==文件编码==
+
+    ```python
+    with open('./exercise/data.csv', 'r', encoding='utf-8') as csvfile:
+        # 读操作：对打开的文件使用csv库的 reader 构造读取对象
+        # 写操作：对打开的文件使用csv库的 writer, DictWriter 构造写对象
+        reader = csv.reader(csvfile)
+        for row in reader:
+            print(row)
+    ```
+
+  - pandas读取
+
+    - read_csv()
+
+    ```python
+    import pandas as pd
+    df = pd.read_csv('./exercise/data.csv')
+    print(df)
+    ```
 
 ### 5.2 关系型数据库
 
+python2中，连接mysql大多使用 ==MySQLdb==，不支持python3
+
+python3中，推荐使用 ==PyMySQL==库
+
+```python
+# 安装方法
+# version:pymysql-0.9.3
+pip install pymysql
+```
+
+database = db
+
+password = passwd
+
+```python
+import pymysql
+
+# 参数
+user = 'root'
+password = 'devil'
+port = 3308
+host = 'localhost'
+db = 'easysql'
+# 连接数据库
+db = pymysql.connect(host=host, user=user, 
+                     passwd=password, port=port, db = db)
+# 创建游标
+cursor = db.cursor()
+# 执行命令 execute()
+cursor.execute('select version()')
+data = cursor.fetchone()
+print(data)
+tables = cursor.execute('show tables')
+print(tables)
+db.close()
+
+# 创建表
+import pymysql
+
+db = pymysql.connect(host='localhost', user='root',
+                     passwd='devil', port=3308, db='easysql')
+cursor = db.cursor()
+sql = 'CREATE TABLE IF NOT EXISTS test (id VARCHAR(25) NOT NULL , name VARCHAR(25) NOT NULL, age INT NOT NULL, PRIMARY KEY (id))'
+cursor.execute(sql)
+db.close()
+
+# 插入数据
+import pymysql
+
+db = pymysql.connect(host='localhost', user='root', passwd='devil', 
+                     port=3308, db='test_db')
+cursor = db.cursor()
+# 格式化符%s ，有几个 Value 写几个
+sql = 'insert into students(id, name, age) values(%s, %s,  %s)'
+# 如果执行失败，则调用 rollback（）执行数据回滚，相当于什么 都没有发生
+try:
+    cursor.execute(sql,(id, name, age))
+    db.commit()
+except:
+    db.rollback()
+finally:
+    cursor.close()
+    db.close()
+```
+
+- 事务的四个属性
+
+  MySQL 事务主要用于处理操作量大，复杂度高的数据。比如说，在人员管理系统中，你删除一个人员，你既需要删除人员的基本资料，也要删除和该人员相关的信息，如信箱，文章等等，这样，这些数据库操作语句就构成一个事务
+
+  - 在 MySQL 中只有使用了 Innodb 数据库引擎的数据库或表才支持事务。
+  - 事务处理可以用来维护数据库的完整性，保证成批的 SQL 语句要么全部执行，要么全部不执行。
+  - 事务用来管理 insert,update,delete 语句
+
+事务是必须满足4个条件（ACID）：：原子性（**A**tomicity，或称不可分割性）、一致性（**C**onsistency）、隔离性（**I**solation，又称独立性）、持久性（**D**urability）
+
+**原子性：**一个事务（transaction）中的所有操作，要么全部完成，要么全部不完成，不会结束在中间某个环节。事务在执行过程中发生错误，会被回滚（Rollback）到事务开始前的状态，就像这个事务从来没有执行过一样
+
+**一致性：**在事务开始之前和事务结束以后，数据库的完整性没有被破坏。这表示写入的资料必须完全符合所有的预设规则，这包含资料的精确度、串联性以及后续数据库可以自发性地完成预定的工作
+
+**隔离性：**数据库允许多个并发事务同时对其数据进行读写和修改的能力，隔离性可以防止多个事务并发执行时由于交叉执行而导致数据的不一致。事务隔离分为不同级别，包括读未提交（Read uncommitted）、读提交（read committed）、可重复读（repeatable read）和串行化（Serializable）
+
+**持久性：**事务处理结束后，对数据的修改就是永久的，即便系统故障也不会丢失。
+
+```python
+# 插入数据实例
+import pymysql
+
+# data示例
+name = '二黑'
+hobby = '抽烟'
+professional = '菜贩子'
+adress = '奈何桥'
+
+db = pymysql.connect(host='localhost', port='33080', user='root',
+                     passwd='devil', db='test_db')
+cursor = db.cursor()
+# 构造sql语句，使用 %s 格式化符来实现， 有几个 value 写几个 %s
+# 然后再execute()方法第二个参数用元组传入value
+sql = 'insert into fatboy_hobby(name,hobby,professional,adress) values(%s,%s,%s)'
+try:
+    cursor.execute(sql,(name,hobby,professional,adress))
+    # 执行commit才可实现数据插入，真正将数据提交到数据库
+    db.commit()
+except:
+    db.rollback()
+db.close()
+
+# 该操作有一个不足，比如突然增加了gender字段，此时句需要改为：
+sql = 'insert into fatboy_hobby(name,hobby,professional,adress,gender)\
+                   values(%s,%s,%s,%s)'
+# execute的传入参数也会变
+
+
+# 很多情况下，我们要达到的效果是不做改变，需要做成一个通用方法
+# 只需要传入一个动态字典就，sql语句根据字典动态构造，元组也动态构造
+data = {
+    'name':'新管病毒',
+    'hobby':'飞行',
+    'professional':'杀人',
+    'gender':'NP'
+}
+table = 'fatboy_hobby'
+keys = ','.join(data.keys())
+# 当时出错的地方，多加注意
+value = ','.join(['%s']*len(data))
+sql = 'insert into {} ({}) values({})'.format(table, keys, values)
+try:
+    if cursor.execute(sel):
+        print('Successful')
+        db.commit()
+except:
+    print('Failed')
+    db.rollback()
+db.close()
+```
+
+- 更新数据
+
+  ```python
+  sql = 'updata sutdents set age = %s where name = %s'
+  try:
+      cursor.execute(sql)
+      db.commit()
+  except:
+      db.rollback()
+  db.close()
+  
+  # 利用占位符构造SQL，简单的数据更新可以用此方法
+  # 实际使用中，大部分的情况需要插入数据，我们关心的是会不会出现重复数据
+  # 如果出现了我们希望更新数据（不存在插入，存在就更新）
+  data = {
+      'id': '20120001',
+      'name': 'Bob',
+      'age': 21
+  }
+  
+  table = 'students'
+  keys = ','.join(data.keys())
+  values = ','.join(['%s']*len(data))
+  sql = 'insert into {table} ({keys}) values ({values}) on duplicate key update'.format(
+      table=table, keys=keys, values=values)
+  # ON DUPLICATE KEY UPDATE
+  # 如果主键存在就更新操作
+  update = ','.join(["{key} = %s".format(key=key)for key in data])
+  sql += update
+  try:
+      # 元组和数字相乘是扩展
+      if cursor.execute(sql,tuple(data.values())*2):
+          print('successful')
+          db.commit()
+  except:
+      print('Faild')
+      db.rollback()
+  db.close()
+  ```
+
+- 删除数据
+
+  ```python
+  import pymysql
+  
+  db = pymysql.connect(
+      host='localhost',
+      port=3308,
+      user='root',
+      passwd='devil',
+      db='test_db',
+      charset='utf8'
+  )
+  cursor = db.cursor()
+  table = 'students'
+  condition = 'age > 20'
+  
+  sql = 'DELETE from {table} where {condition}'.format(table,condition)
+  try:
+      cursor.execute(sql)
+      db.commit()
+  except:
+      db.rollback()
+  db.close()
+  ```
+
+### 5.3非关系型数据库
+
+NoSQL，全称为 Not Noly SQL,不仅仅是SQL，泛指非关系型数据库，NoSQL是基于键值对的，不需要sql层的解析，数据之间没有耦合性，性能高
+
+模块间联系越多，其耦合性越强，同时表明其独立性越差( 降低耦合性，可以提高其独立性)。软件设计中通常用==耦合度==和==内聚度==作为衡量模块独立程度的标准
+
+划分模块的一个准则就是==高内聚低耦合==
+
+非关系型数据库分类：
+
+- 键值存储数据库：Redis, Voldemort, Oracle BDB 等
+- 列存储数据库： Cassandra, HBase， Riak
+- 文档型数据库： CouchDB, MongoDB
+- 图形数据库： Neo4J, InfoGrid, Infinite Graph
+
+对于爬虫数据来说，数据可能存在字段提取失败而缺失的情况，而且数据随时可能调整，数据间还有嵌套关系，需要序列化操作才可存储，非常不方便，如果用了非关系型数据库就可避免一些麻烦，简单高效
+
+下面主要介绍MongoDB和Redis:
+
+#### 5.3.1MongoDB
+
+MongoDB 由c++编写的NoSQL，是一个基于分布式文件存储的开源数据库系统，内容存储类是json对象，字段可包含其他文档，数组及文档数组
+
+- 连接MongoDB
+
+- pg226
+
+  
 
 
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+## 第六章 Ajax数据爬取
+
+有时候requests获取页面的时候，得到的结果和浏览器不一致，因为requests获取的是原始的html文档，浏览器中的页面是经过javascript处理过的，这些数据来源有多种，可能是通过ajax加载，可能是含在html文档中，可能是经过javascript和特定算法后生成的。
+
+ajax:数据是异步加载方式，最初页面不包含某些数据，原始页面加载完后，会再向服务器请求某个接口获取数据
+
+这样在web上可以做到前后端分离，降低服务器直接渲染页面带来的压力。
+
+解决方法：分析网页后台向接口发送的ajax请求，用requests模拟ajax请求
+
+### 6.1 什么是Ajax
+
+Ajax,全称 Asynchronous JavaScript and Xml,即异步的javascript 和 xml,利用JavaScript在保证页面不被刷新、页面链接不改变的情况下于服务器交换数据并更新部分网页的技术。
+
+传统网页要更新其内容，必须刷新整个页面，有了Ajax，便可以在页面不被刷新的情况下更新其内容。页面实际是在后台于服务器进行了数据交换，获取数据后，通过javascript改变网页
+
+#### 基本原理：
+
+ajax 请求到网页更新过程：
+
+​	==发送请求---解析内容---渲染网页==
+
+- 发送请求：
+
+  javascript可以实现页面交互功能，这里请求是javascript发送的
+
+- 解析内容
+
+  返回内容可能是html,可能是json,接下来只需在javascript中处理即可
+
+- 渲染网页
+
+  比如通过`document.getElementById().innerHTML`可以对某个元素内的源代码进行更改，这样的操作也称为DOM操作，即对Document网页进行操作（更改，删除等）
+
+要获取这些数据，需要知道，请求怎么发的，发往哪里，发了哪些参数，知道这些，就可用python模拟发送获取结果
+
+#### Ajax分析方法：
+
+借助浏览器的开发者工具，在Network选项卡刷新页面，可以看到页面加载过程中浏览器和服务器之间发送请求和接受响应的所有记录
+
+ajax有其特殊的请求类型==xhr==(XML HTTP Request)
+
+![014](D:\project\pycon\web scrapy\img\014.png)
+
+打开微博向下滑动网页，在network下找到ajax链接，选中后在headers选项的request headers对象中可以看到__X-Requested-With:XMLHttpRequest__,标记了此请求是ajax请求，javaScript接受数据后，执行相应的渲染方法，页面就出来了
+
+#### 过滤请求
+
+chrome开发者工具中network下的xhr选项可以筛选出所有的ajax请求
+
+![015](D:\project\pycon\web scrapy\img\015.png)
+
+#### Ajax数据提取
+
+
+
+
+
+
+
+
+
+
+
+## 第七章 动态渲染页面爬取
+
+
+
+## 第八章 验证码识别
+
+
+
+## 第九章 代理的使用
+
+
+
+## 第十章 模拟登录
+
+
+
+## 第十一章 App的爬取
+
+
+
+## 第十二章 pyspider 框架的使用
+
+
+
+## 第十三章 Scrapy 框架的使用
+
+
+
+## 第十四章 分布式爬虫
+
+
+
+## 第十五章 分布式爬虫的部署
 
 
 

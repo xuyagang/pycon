@@ -11,4 +11,5 @@ print(r.cookies)
 
 
 r = requests.get('http://httpbin.org/get')
+r.encoding= 'utf-8'
 print(r.text)
