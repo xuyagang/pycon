@@ -6,6 +6,12 @@ import requests
 from urllib.parse import urlencode
 from lxml import etree
 # https://weibo.com/a/aj/transform/loadingmoreunlogin?ajwvr=6&category=1760&page=3&lefnav=0&cursor=&__rnd=1583075905362
+from pymongo import MongoClient
+
+
+
+
+
 
 baseUrl = 'https://weibo.com/a/aj/transform/loadingmoreunlogin?'
 now = int(time.time()*1000)
@@ -42,24 +48,36 @@ def parse_page(data):
     # 获取微博id, 正文, 赞数, 评论数, 转发
     if data:
         html = etree.HTML(data.get('data'))
-        # 微博标题
-        titles = html.xpath('//div[@class="UG_list_b"]/div/h3/a/text()')
-        # 微博链接
-        hrefs = html.xpath('//div[@class="UG_list_b"]/div/h3/a/@href')
-        # 博主
-        authors = html.xpath('//div[@class="UG_list_b"]/div/div/a[2]//text()')
-        # 转发
-        forwards = html.xpath('//div[@class="UG_list_b"]/div/div/span[6]/em[2]/text()')
-        # # 评论
-        comments = html.xpath('//div[@class="UG_list_b"]/div/div/span[4]/em[2]/text()')
-        # # 点赞
-        likes = html.xpath('//div[@class="UG_list_b"]/div/div/span[2]/em[2]/text()')
-    print(authors,comments,likes,forwards,hrefs)
+        items = html.xpath('//div[@class="UG_list_b"]')
+        for item in items:
+            weibo = {}
+            # 标题
+            weibo['titles'] = item.xpath('./div/h3/a/text()')[0]
+            # 链接
+            weibo['hrefs'] = item.xpath('./div/h3/a/@href')[0]
+            # 博主
+            weibo['authors'] = item.xpath('./div/div/a[2]//text()')[0]
+            # 转发
+            weibo['forwards'] = item.xpath('./div/div/span[6]/em[2]/text()')[0]
+            # 评论
+            weibo['comments'] = item.xpath('./div/div/span[4]/em[2]/text()')[0]
+            # 点赞
+            weibo['likes'] = item.xpath('./div/div/span[2]/em[2]/text()')[0]
+            yield weibo
+            # print(weibo)
 
-
+# 写入数据库
+client = MongoClient(host='localhost', port=27017)
+# client = MontoClient('mongodb://localhost:27017/')
+db = client['weibo']
+collection = db['remen']
+def save_to_mongo(data):
+    if collection.insert(data):
+        print('saved to mongo')
 
 
 if __name__ == '__main__':
     for i in range(10):
         data = getPage(i)
-        parse_page(data)
+        # parse_page(data)
+        save_to_mongo(parse_page(data))
