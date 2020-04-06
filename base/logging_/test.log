@@ -1,5 +1,0 @@
-Fri, 14, Feb, 2020, 18:41:22 logging_test.py[line:69] DEBUG debug message
-Fri, 14, Feb, 2020, 18:41:22 logging_test.py[line:70] INFO info message
-Fri, 14, Feb, 2020, 18:41:22 logging_test.py[line:71] WARNING warning message
-Fri, 14, Feb, 2020, 18:41:22 logging_test.py[line:72] ERROR error message
-Fri, 14, Feb, 2020, 18:41:22 logging_test.py[line:73] CRITICAL critical message

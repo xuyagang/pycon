@@ -1,0 +1,6 @@
+2020-03-31 14:48:58,391 - __main__ - INFO - This is a log info
+2020-03-31 14:48:58,391 - __main__ - WARNING - Warning exists
+2020-03-31 14:48:58,391 - __main__ - INFO - Finish
+2020-03-31 15:02:49,685 - __main__ - INFO - This is a log info
+2020-03-31 15:02:49,685 - __main__ - WARNING - Warning exists
+2020-03-31 15:02:49,685 - __main__ - INFO - Finish

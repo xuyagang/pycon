@@ -6913,34 +6913,36 @@ import docstr
 | \_\_init\_\_ | 构造函数 | 对象建立：X= Class(args) |
 | _\_del\_\_   | 析构函数 | x对象回收                |
 | _\_add\_\_  |  运算+ |                          |
-| _\_init\_\_  |          |                          |
-| _\_init\_\_  |          |                          |
-| _\_init\_\_  |          |                          |
-| _\_init\_\_  |          |                          |
-| _\_init\_\_  |          |                          |
-| _\_init\_\_  |          |                          |
-| _\_init\_\_  |          |                          |
-| _\_init\_\_  |          |                          |
-|              |          |                          |
-|              |          |                          |
-|              |          |                          |
-|              |          |                          |
-|              |          |                          |
-|              |          |                          |
-|              |          |                          |
-|              |          |                          |
-|              |          |                          |
-|              |          |                          |
-|              |          |                          |
-|              |          |                          |
-|              |          |                          |
-|              |          |                          |
-|              |          |                          |
-|              |          |                          |
+| _\_or\_\_ | 运算符 \|（位 or） |                          |
+| _\_repr\_\_,_\_str\_\_ | 打印、转换 | print(x),repr(x),str(x) |
+| _\_call\_\_ | 函数调用 | x(*args, **kargs) |
+| _\_getattr\_\_ | 点号运算 | x.undefined |
+| _\_setattr\_\_ | 属性赋值 | x.any = value |
+| _\_delattr\_\_ | 属性删除 | del x.any |
+| _\_getattribute\_\_ | 属性获取 | x.any |
+| _\_getitem\_\_ | 索引运算 | x[key],x[i:j],没\_\_iter\_\_时的for循环和其他迭代器 |
+| _\_setitem\_\_ | 索引赋值 |                          |
+| _\_deltitem\_\_ | 索引和分片删除 | del x[key], del x[i:j] |
+| _\_len\_\_ | 长度 | len(x),,如果没有\_\_bool\_\_,真值测试 |
+| _\_bool\_\_ | 布尔测试 | boo(x) |
+| _\_lt\_\_,_\_gt\_\_ | 比较 | x<y,x>y |
+| _\_le\_\_,_\_ge\_\_ | 比较 | x<=y ,x>=y |
+| _\_eq\_\_,_\_ne\_\_ | 比较 | x == y, x!= y |
+| _\_radd\_\_ | 右侧加法 | other + x |
+| _\_iadd\_\_ | 增强的加法 | x +=y |
+| _\_iter\_\_,_\_next\_\_ | 迭代环境 | I = iter(x), next(I), for loops, |
+| _\_contains\_\_ | 成员关系测试 |                          |
+| _\_index\_\_ | 整数值 | hex(x), bin(x), oct(x), O(x) |
+| _\_enter\_\_,\_\_exit\_\_ | 环境管理，详33章 |                          |
+| _\_get\_\_,\_\_set\_\_ | 描述符属性 | x.attr, x.attr = value, del x.attr |
+| _\_delete\_\_ | 描述符属性 |                          |
+| _\_new\_\_ | 描述符属性 | 在 \_\_init\_\_之前创建对象 |
 
+所有重载方法名称前后都有下划线字符，以便区分变量
 
+特殊方法名称和表达式或运算有映射关系，用python语言预定于好
 
-
+pg746
 
 
 
@@ -6991,6 +6993,166 @@ import docstr
 
 
 ### 第三十章_类的设计
+
+#### python和OOP
+
+oop的实现可以概括为三个概念：
+
+- 继承
+
+  基于python的属性查找
+
+- 多态
+
+  x.method方法中，method的具体意义取决于x的类型
+
+  是由于python没有类型申明而出现的，属性总是在运行期解析
+
+- 封装
+
+  方法和运算法实现行为，数据隐藏默认是一种惯例
+
+  在python中打包，实现细节隐藏在接口之后，
+
+#### OOP和继承：“是一个”关系
+
+继承是由属性点号运算启动，继承是一种定义集合成员关系的方式
+
+```python
+class Employee:
+    def __init__(self, name, salary=0):
+        self.name = name
+        self.salary = salary
+    def giveRaise(self, percent):
+        self.salary = self.salary * (1  +percent)
+    def work(self):
+        print(self.name, 'does stuff')
+    def __repr__(self):
+        return "<Employee: name=%s, salary=%s>" % (self.name, self.salary)
+
+class Chef(Employee):
+    def __init__(self, name):
+        Employee.__init__(self, name, 50000)
+    def work(self):
+        print(self.name, 'makes food')
+
+class Server(Employee):
+    def __init__(self, name):
+        Employee.__init__(self, name, 40000)
+    def work(self):
+        print(self.name, 'interfaces with customer')
+
+class PizzaRobot(Chef):
+    def __init__(self, name):
+        Chef.__init__(self, name)
+    def work(self):
+        print(self.name, 'makes pizza')
+
+if __name__ == '__main__':
+    bob = PizzaRobot('bob')
+    print(bob)
+    bob.work()
+    bob.giveRaise(0.2)
+    print(bob)
+
+    for klass in Employee, Chef, Server, PizzaRobot:
+        obj = klass(klass.__name__)
+        # obj.work()
+        print(obj)
+        print('---')
+```
+
+#### OOP和组合：”有一个“关系
+
+组合就是指内嵌对象集合体，反应各组成部分之间的关系
+
+```python
+from employee import PizzaRobot, Server
+
+class Customer:
+    def __init__(self, name):
+        self.name = name
+    def order(self, server):
+        print(self.name, 'orders from', server)
+    def pay(self, server):
+        print(self.name, 'pays for item to', server)
+
+class Oven:
+    def bake(self):
+        print('oven bakes')
+
+class PizzShop:
+    def __init__(self):
+        # 构造函数将导入的类实例化并将其嵌入
+        self.server = Server('Pat')
+        self.chef = PizzaRobot('Bob')
+        self.oven = Oven()
+    
+    def order(self, name):
+        customer = Customer(name)
+        customer.order(self.server)
+        self.chef.work()
+        self.oven.bake()
+        customer.pay(self.server)
+
+if __name__ == '__main__':
+    scene = PizzShop()
+    scene.order('Homer')
+    print('...')
+    scene.order('shaggy')
+```
+
+组合与继承是互补的工具
+
+##### 重访流处理器
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 ### 第三十一章_类的高级主题
 

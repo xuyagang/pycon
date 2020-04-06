@@ -1,6 +1,0 @@
-2020/02/15 02:27:10 - __main__ - ERROR - Faild to get result
-Traceback (most recent call last):
-  File "d:/project/pycon/base/logging_stepbystep_config.py", line 22, in <module>
-    result = 10 / 0
-ZeroDivisionError: division by zero
-2020/02/15 02:27:47 - __main__ - ERROR - Faild to get result

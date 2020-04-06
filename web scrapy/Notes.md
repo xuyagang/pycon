@@ -631,9 +631,75 @@ Python 2 中，有 urllib 和 urllib2 两个库来实现请求的发送。 而�
 
 常用的匹配规则：
 
+| ^           | 匹配字符串的开头                                             |
+| ----------- | ------------------------------------------------------------ |
+| $           | 匹配字符串的末尾。                                           |
+| .           | 匹配任意字符，除了换行符，当re.DOTALL标记被指定时，则可以匹配包括换行符的任意字符。 |
+| [...]       | 用来表示一组字符,单独列出：[amk] 匹配 'a'，'m'或'k'          |
+| [^...]      | 不在[]中的字符：[^abc] 匹配除了a,b,c之外的字符。             |
+| re*         | 匹配0个或多个的表达式。                                      |
+| re+         | 匹配1个或多个的表达式。                                      |
+| re?         | 匹配0个或1个由前面的正则表达式定义的片段，非贪婪方式         |
+| re{ n}      | 精确匹配 n 个前面表达式。例如， **o{2}** 不能匹配 "Bob" 中的 "o"，但是能匹配 "food" 中的两个 o。 |
+| re{ n,}     | 匹配 n 个前面表达式。例如， o{2,} 不能匹配"Bob"中的"o"，但能匹配 "foooood"中的所有 o。"o{1,}" 等价于 "o+"。"o{0,}" 则等价于 "o*"。 |
+| re{ n, m}   | 匹配 n 到 m 次由前面的正则表达式定义的片段，贪婪方式         |
+| a\| b       | 匹配a或b                                                     |
+| (re)        | 对正则表达式分组并记住匹配的文本                             |
+| (?imx)      | 正则表达式包含三种可选标志：i, m, 或 x 。只影响括号中的区域。 |
+| (?-imx)     | 正则表达式关闭 i, m, 或 x 可选标志。只影响括号中的区域。     |
+| (?: re)     | 类似 (...), 但是不表示一个组                                 |
+| (?imx: re)  | 在括号中使用i, m, 或 x 可选标志                              |
+| (?-imx: re) | 在括号中不使用i, m, 或 x 可选标志                            |
+| (?#...)     | 注释.                                                        |
+| (?= re)     | 前向肯定界定符。如果所含正则表达式，以 ... 表示，在当前位置成功匹配时成功，否则失败。但一旦所含表达式已经尝试，匹配引擎根本没有提高；模式的剩余部分还要尝试界定符的右边。 |
+| (?! re)     | 前向否定界定符。与肯定界定符相反；当所含表达式不能在字符串当前位置匹配时成功 |
+| (?> re)     | 匹配的独立模式，省去回溯。                                   |
+| \w          | 匹配字母数字及下划线                                         |
+| \W          | 匹配非字母数字及下划线                                       |
+| \s          | 匹配任意空白字符，等价于 [\t\n\r\f].                         |
+| \S          | 匹配任意非空字符                                             |
+| \d          | 匹配任意数字，等价于 [0-9].                                  |
+| \D          | 匹配任意非数字                                               |
+| \A          | 匹配字符串开始                                               |
+| \Z          | 匹配字符串结束，如果是存在换行，只匹配到换行前的结束字符串。 |
+| \z          | 匹配字符串结束                                               |
+| \G          | 匹配最后匹配完成的位置。                                     |
+| \b          | 匹配一个单词边界，也就是指单词和空格间的位置。例如， 'er\b' 可以匹配"never" 中的 'er'，但不能匹配 "verb" 中的 'er'。 |
+| \B          | 匹配非单词边界。'er\B' 能匹配 "verb" 中的 'er'，但不能匹配 "never" 中的 'er'。 |
+| \n, \t, 等. | 匹配一个换行符。匹配一个制表符。等                           |
+| \1...\9     | 匹配第n个分组的内容。                                        |
+| \10         | 匹配第n个分组的内容，如果它经匹配。否则指的是八进制字符码的表达式。 |
+
 ![010](D:\project\pycon\web scrapy\img\010.png)
 
-#### match()
+| 实例        | 描述                              |
+| :---------- | :-------------------------------- |
+| [Pp]ython   | 匹配 "Python" 或 "python"         |
+| rub[ye]     | 匹配 "ruby" 或 "rube"             |
+| [aeiou]     | 匹配中括号内的任意一个字母        |
+| [0-9]       | 匹配任何数字。类似于 [0123456789] |
+| [a-z]       | 匹配任何小写字母                  |
+| [A-Z]       | 匹配任何大写字母                  |
+| [a-zA-Z0-9] | 匹配任何字母及数字                |
+| [^aeiou]    | 除了aeiou字母以外的所有字符       |
+| [^0-9]      | 匹配除了数字外的字符              |
+
+| 实例 | 描述                                                         |
+| :--- | :----------------------------------------------------------- |
+| .    | 匹配除 "\n" 之外的任何单个字符。要匹配包括 '\n' 在内的任何字符，请使用象 '[.\n]' 的模式。 |
+| \d   | 匹配一个数字字符。等价于 [0-9]。                             |
+| \D   | 匹配一个非数字字符。等价于 [^0-9]。                          |
+| \s   | 匹配任何空白字符，包括空格、制表符、换页符等等。等价于 [ \f\n\r\t\v]。 |
+| \S   | 匹配任何非空白字符。等价于 [^ \f\n\r\t\v]。                  |
+| \w   | 匹配包括下划线的任何单词字符。等价于'[A-Za-z0-9_]'。         |
+| \W   | 匹配任何非单词字符。等价于 '[^A-Za-z0-9_]'。                 |
+
+#### match(pattern, string, flags=0)
+
+- group(num=0),匹配的整个表达式的字符串，group() 可以一次输入多个组号，在这种情况下它将返回一个包含那些组所对应值的元组
+- groups(),返回一个包含所有小组字符串的元组，从 1 到 所含的小组号
+
+`从0匹配，匹配不到返回none,此时没group/span属性，配合group返回结果`
 
 match（）方法是从字符串的==开头开始匹配==的，一旦开头不匹配，那么整个匹配就失败 ,适合用来检测某个字符串是存符合某个正则表达式的规则。
 
@@ -650,6 +716,24 @@ result = re.match(’<Hello\s\d\d\d\s\d{4}\s\w{10}’, content)
 第一个参数传入了正则表达式，第二个参数传入了要匹配的字符串
 
 打印输出结果，可以看到结果是 SRE_Match 对象,该对象有两个方法： ==group()==方法可以输出匹配到的内容, ==span（）==方法可以输出匹配的范围
+
+```python
+pattern = re.compile(r'\d+')                    # 用于匹配至少一个数字
+m = pattern.match('one12twothree34four')        # 查找头部，没有匹配
+m = pattern.match('one12twothree34four', 3, 10) # 从'1'的位置开始匹配，正好匹配
+
+m.group(0)   # 可省略 0
+m.start(0)   # 可省略 0
+m.end(0)     # 可省略 0
+m.span(0)    # 可省略 0
+```
+
+当匹配成功时返回一个 Match 对象，其中：
+
+- `group([group1, …])` 方法用于获得一个或多个分组匹配的字符串，当要获得整个匹配的子串时，可直接使用 `group()` 或 `group(0)`；
+- `start([group])` 方法用于获取分组匹配的子串在整个字符串中的起始位置（子串第一个字符的索引），参数默认值为 0；
+- `end([group])` 方法用于获取分组匹配的子串在整个字符串中的结束位置（子串最后一个字符的索引+1），参数默认值为 0；
+- `span([group])` 方法返回 `(start(group), end(group))`
 
 ##### 匹配目标
 
@@ -678,31 +762,61 @@ result = re.match（'^He.*?（＼d＋）.*?Demo$ '， content, re.S)
 
 ![011](D:\project\pycon\web scrapy\img\011.PNG)
 
+1. **re.I** 忽略大小写
+2. **re.L** 表示特殊字符集 \w, \W, \b, \B, \s, \S 依赖于当前环境
+3. **re.M** 多行模式
+4. **re.S** 即为 **.** 并且包括换行符在内的任意字符（**.** 不包括换行符）
+5. **re.U** 表示特殊字符集 \w, \W, \b, \B, \d, \D, \s, \S 依赖于 Unicode 字符属性数据库
+6. **re.X** 为了增加可读性，忽略空格和 **#** 后面的注释
+
+
+
 ##### 转义匹配
 
 . 可以匹配除换行符以外的任意字符，如果目标字符含有 .  就需要用到转义匹配
 
-#### search()
+```
+re.match('www\.baidu\.com')
+```
 
-在匹配时会扫描整个字符串，然后返回第一个成功匹配的结 果
+#### search(pattern, string, flags=0)
 
-正则表达式可以是字符串的一部分，在匹配时， search（）方法会依次扫描字符串，丘 到找到==第一个==符合规则的字符串，然后返回匹配内容，如果搜索完了还没有找到，就返回 None
+在匹配时会扫描==整个==字符串，然后返回==第一个==成功匹配的结 果
+
+正则表达式可以是字符串的一部分，在匹配时， search（）方法会依次扫描字符串，直到找到==第一个==符合规则的字符串，然后返回匹配内容，如果搜索完了还没有找到，就==返回 None==
 
 为了匹配方便，我们可以尽量使用 search（）方法
 
-代码有换行，第三个参数需要传人 re. S
+代码有换行，第三个参数需要传人 re. S，这使得==.*?==可以匹配换行
 
-用小括号包围，所以可以用 group（）方法获取
+用小括号包围，所以可以用 ==group（）==方法获取
 
-#### findall()
+大部分的html文本都包含了换行，所以尽量都加上re.S
 
-获取匹配正则表达式的所有内容
+```
+re.search(pattern, 'html', re.S)
+```
 
-返回的列表中的每个元素都是元组类型
+- group方法同上
 
-#### sub()
+#### findall(string[, pos[, endpos]])
 
-来修改文本,比如，想要把一串文本中的 所有数字都去掉，如果只用字符串的 replace（）方法，那就太烦琐了，这时可以借助 sub（）方法
+- **string** : 待匹配的字符串。
+- **pos** : 可选参数，指定字符串的起始位置，默认为 0。
+- **endpos** : 可选参数，指定字符串的结束位置，默认为字符串的长度。
+
+获取匹配正则表达式的所有内容，搜索整个字符串
+
+返回的==列表==中的每个元素都是==元组==类型
+
+#### sub(pattern, repl, string, count=0, flags=0)
+
+- pattern : 正则中的模式字符串。
+- repl : 替换的字符串，也可为一个==函数==。
+- string : 要被查找替换的原始字符串。
+- count : 模式匹配后替换的最大次数，默认 0 表示替换所有的匹配
+
+来==修改==文本,比如，想要把一串文本中的 所有数字都去掉，如果只用字符串的 replace（）方法，那就太烦琐了，这时可以借助 sub（）方法
 
 ```python
 content =’54aKS4yrsoiRS4ixSL2g' 
@@ -710,6 +824,14 @@ content = re.sub(’\d+',”, content)
 ```
 
 第一个参数传入＼d＋来匹配所有的数字，第二个参数为替换成的字符串,第三个参数是原字符串
+
+- replace方法
+
+  ```python
+  str.replace(old, new[, max])
+  # 将字符串中的 str1 替换成 str2,如果 max 指定，则替换max 次
+  # 不指定则全部替换
+  ```
 
 #### compile()
 
@@ -720,7 +842,31 @@ pattern = re.compile(’\d{2}:\d{2}’)
 resultl = re.sub(pattern, '’, contentl)
 ```
 
-compile（）还可以传入修饰符，例如 re . S 等修饰符，这样在 search（） 、 findall（）等方法中 就不需要额外传了。 所以， compile（）方法可以说是给正则表达式做了一层封装，以使我们更好地复用
+`compile(pattern, flags=0) `还可以传入==修饰符==，例如 re . S 等修饰符，这样在 search（） 、 findall（）等方法中 就不需要额外传了。 所以， compile（）方法可以说是给正则表达式做了一层封装，以使我们更好地复用
+
+### re.finditer(pattern, string, flags=0)
+
+ findall 类似，在字符串中找到正则表达式所匹配的所有子串，并把它们作为一个迭代器返回
+
+```
+it = re.finditer(r"\d+","12a32bc43jf3") 
+for match in it: 
+    print (match.group() )
+```
+
+### re.split(pattern, string[, maxsplit=0, flags=0])
+
+split 方法按照能够匹配的子串将字符串分割后返回列表
+
+- maxsplit:分隔次数，maxsplit=1 分隔一次，默认为 0，不限制次数。
+
+### re.MatchObject
+
+group() 返回被 RE 匹配的字符串。
+
+- **start()** 返回匹配开始的位置
+- **end()** 返回匹配结束的位置
+- **span()** 返回一个元组包含匹配 (开始,结束) 的位置
 
 ### 3.4抓取猫眼电影
 
@@ -1042,7 +1188,7 @@ lxml有解析 HTML和XML的功能，而且速度快，容错力强，推荐使�
       print('String:', li.string)
   ```
 
-  string 是==属性==，get_text()是==方法==
+  string 是属性，get_text()是方法
 
 ### 4.3 Pyquery
 
@@ -2031,6 +2177,167 @@ result = collection.find({'name':{'$regex':'^M.*'}})
   # 详细参见官网
   ```
 
+#### 5.3.2 Redis存储
+
+Redis是一个基于内存的高效的键值型非关系型数据库，存取效率极高，支持多种存储数据结构
+
+下面主要介绍redis-py库
+
+##### Redis 和 StrictRedis
+
+redis-py提供两个类来实现redis的命令操作
+
+StrictRedis实现了大部分官方命令，参数也一一对应，官方推荐使用StrictRedis
+
+##### 连接redis
+
+```python
+from redis import StrictRedis
+
+redis = StrictRedis(host='localhost', port=6379, db=0, password='devil')
+redis.set('name','Bob')
+print(redis.get('name'))from redis import StrictRedis
+```
+
+这样的连接效果是一样的，观察源码可发现，StrictRedis内其实就是用host和port等参数又构造了一个ConnectionPool,所以直接将ConnectionPool当作参数传给StrictRedis也一样，另外也通过url来构造，url的格式支持如下三种：
+
+redis://[:password]@host:port/db
+
+rediss://[:password]@host:port/db
+
+unix://[:password]@/path/to/socket.sock?db=db
+
+这里传入了Redis的地址，运行端口，使用的数据库和密码信息，在默认情况下4个参数分别为localhost,6379,0和None.
+
+这三种url分别表示创建==RedisTCP==连接，==RedisTCP + SSL==连接，==RedisUNIXsocket==连接，我们只需要构造上面任意一种URL即可，其中password部分如果有则可以写，没有则可以忽略，url的连接演示：
+
+使用第一种方式，申明一个redis连接字符串，调用from_url()方法创建connectionPool,接着将其传给strictredis
+
+```
+url = 'redis://:devil@localhost:6379/0'
+pool = ConnectionPool.from_url(url)
+redi = StrictRedis(connection_pool=pool)
+```
+
+##### 键操作
+
+| 方法               | 作用                                          | 参数                            | 示例                         | 示例说明                    | 结果      |
+| ------------------ | --------------------------------------------- | ------------------------------- | ---------------------------- | --------------------------- | --------- |
+| exists（name）     | 判断键是否存在                                | name:键名                       | redis.exists('name')         | 是否存在键                  | True      |
+| delete（name）     | 删除一个键                                    | name:键名                       | redis.delete('name')         | 删除键                      | 1         |
+| type（name）       | 判断键类型                                    | name:键名                       | redis.type('name')           | 判断键类型                  | b'string' |
+| keys(pattern)      | 获取符合的键                                  | pattern:匹配规则                | redis.keys('n*')             | 获取所有以n开头的键         | b'name'   |
+| randomkey()        | 随机获取一个键                                |                                 | randomkey()                  |                             |           |
+| rename(src, dst)   | 重命名                                        | src:原键名           dst:新键名 | redis.rename(name, nickname) | 将name重命名nickname        | True      |
+| dbsize()           | 获取当前数据库中键的数目                      |                                 | dbsize()                     |                             |           |
+| expire(name, time) | 设定键的过期时间，单位为秒                    | name:键名           time:秒数   | redis.expire('name', 2)      | 将name键的过期时间设置为2秒 | True      |
+| ttl(name)          | 获取键的过期时间，单位为秒，-1 表示永久不过期 | name:键名                       | redis.ttl('name')            | 获取name这个键的过期时间    | -1        |
+| move(name, db)     | 将键移动到其他数据库                          | name:键名    db:数据库代号      | move('name', 2)              | 将name移动到2号数据库       | True      |
+| flushdb()          | 删除当前选择数据库中的所有键                  | flushdb()                       | 删除当前选择数据库中的所有键 | flushdb()                   | True      |
+| flushall()         | 删除所有数据库中的所有键                      | flushall()                      |                              |                             | True      |
+
+##### 字符串操作
+
+Redis支持最基本的键值对形式存储
+
+| 方法                          | 参数说明                                                     | 作用                                                         | 示例说明                                         | 示例结果                                        | 示例                                                         |
+| ----------------------------- | ------------------------------------------------------------ | ------------------------------------------------------------ | ------------------------------------------------ | ----------------------------------------------- | ------------------------------------------------------------ |
+| set(name, value)              | name:键名   value:值                                         | 给name键赋值value                                            | 给name键赋值为Bob                                | True                                            | redis.set('name','Bob')                                      |
+| get(name)                     | name:键名                                                    | 返回数据库中键为name的string的value                          | 返回neme这个键的value                            | b'Bob'                                          | redis.get('name')                                            |
+| getset(name,value)            | name:键名     value:新值                                     | 给数据库中键为name的string赋予值value并返回上次value         | 赋值name为Mike并得到上次的value                  | b'Bob'                                          | redis.getset('name', 'Mike')                                 |
+| mget(keys, *args)             | keys:键的列表                                                | 返回多个键对应的value                                        | 返回name和nickname的value                        | [b'Mike', b'Miker']                             | redis.mget(['name', 'nickname'])                             |
+| setnx(name, value)            | name:键名                                                    | 如果不存在这个键值对，则更新value,否则不变                   | 如果newname这个键不存在，则设置为James           | 第一次运行结果为True，第二次运行结果为False     | redis.setnx('newname','James')                               |
+| setex(name,time,value)        | name:键名 time：有效期  value：值                            | 设置可以对应的值为string类型的value，并设置此键值对应的有效期 | 将name这个键的值设为James,有效期为1秒            | True                                            | redis.setex('name',1,'James')                                |
+| setrange(name, offset, value) | name:键名，offset:偏移量，value：值                          | 设置指定键的value值的子字符串                                | 设置name为hello字符串，并在index为6的位置补world | 11,==修改后的字符串长度==，True                 | redis.set('name', 'hello')     redis.setrange('name',6, 'world') |
+| mset(mapping)                 | mapping:字典                                                 | 批量赋值                                                     | 将name1设为Durant, name2设为James                | True                                            | redis.mset({'name1':'Durant', 'name2':'James'})              |
+| msetnx(mapping)               | mapping：字典                                                | 键均不存在时才批量赋值                                       | 在name3和name4均不存在的情况下才设置二者值       | True                                            | redis.msetnx({'name3':'Smith', 'name4':'Curry'})             |
+| incr(name, amount=1)          | name:键名   amount:增长的值                                  | 键为name的value增值操作，默认为1，键不存在则被创建并设为amount | age对应的值增1，若不存在，则会创建并设置为1      | redis.incr('age', 1)                            | 返回修改后的值                                               |
+| decr(name, amount=1)          | name:键名  amount：减少的值                                  | 键为name的value减值操作，默认为1，键不存在则被创建并将value设置为-amount | age对应的值减1，若不存在，则会创建并设置为-1     | redis.decr('age', 1)                            | -1, 即修改后的值                                             |
+| append(key, value)            | key:键名                                                     | 键为name的string的值附加value                                | 向键为nickname的值后追加ok                       | redis.append('nickname', 'ok')                  | 13, 即修改后的字符串长度                                     |
+| substr(name, start, end= -1)  | name:键名   start:起始索引；end:终止索引，默认为-1，表示截取到末尾 | 返回键为name的string的子串                                   | 返回键为name的值的字符串，截取索引为 1~4 的字符  | redis.substr('name', 1, 4)                      | b'ello'                                                      |
+| getrange(key, start, end)     | 获取键的value值，从start到end的子字符串                      | key:键名；start：起始索引；end:终止索引                      | redis.getrange('name', 1, 4)                     | 返回键为name的值的字符串，截取索引为 1~4 的字符 | b'ello'                                                      |
+
+##### 列表操作
+
+Redis提供了列表存储，列表内的元素可以重复，可以从两端存储
+
+| 方法                      | 作用                                                         | 参数说明                                       | 示例                        | 示例说明                                   | 示例结果         |
+| ------------------------- | ------------------------------------------------------------ | ---------------------------------------------- | --------------------------- | ------------------------------------------ | ---------------- |
+| rpush(name,*values)       | 在键为name的列表末尾添加值为value的元素，可以传多个          | name:键名 values:值                            | redis.rpush('list',1, 2, 3) | 向键为list的列表尾添加1，2，3              | 3，列表大小      |
+| lpush(name,*values)       | 在键为name的列表头添加值为value的元素，values:值可以传多个   | name:键名，values：值                          | redis.lpush('list', 0)      | 向键为list的列表头部添加0                  | 4，列表大小      |
+| llen(name)                | 返回键为name的列表的长度                                     | name:键名                                      | redis.llen('list')          |                                            |                  |
+| lrange(name, start, end)  | 返回键为name的列表中start至end之间的元素                     | name:键名；start:起始索引；end:终止索引        | redis.lrange(list, 1, 3)    | 返回起始索引为1，终止索引为3范围对应的列表 | [b'3',b'2',b'1'] |
+| ltrim(name,start,end)     | 截取键为name的列表，保留索引为start到end的内容               | name：键名;start:起始索引；end:终止索引        | ltrim('list', 1, 3)         | 保留键为list是索引为1到3的元素             | True             |
+| lindex(name, index)       | 返回键为name的列表中index位置的元素                          | name:键名  index:索引                          | redis.index('list', 2)      | 返回列表中索引为2的元素                    |                  |
+| lset(name, index, value ) | 给键为name的列表中index位置的元素赋值                        |                                                |                             |                                            |                  |
+| lrem(name,count, value)   | 删除count个键对应的列表中值为value的元素                     |                                                |                             |                                            |                  |
+| lpop(name)                | ==返回并删除==键为name的列表中的==首元素==                   |                                                |                             |                                            |                  |
+| rpop(name)                | 返会并删除键为name的列表中的==尾元素==                       |                                                |                             |                                            |                  |
+| blpop(keys, timeout=0)    | 返回并删除名称在keys中的list中的首个元素，如果列表为空，则会阻塞 | keys:键列表，timeout:超时等待时间，0为一直等待 |                             |                                            |                  |
+| brpop(keys, timeout=0)    | 返回并删除键为name的列表中的尾元素，如果list为空，会一直阻塞， | keys:键列表timeout:超时等待时间，0为一直等待   | redis.brpop('list')         |                                            |                  |
+| rpoplpush(src, dst)       | 返回并删除名称为src的列表的尾元素，并将该元素添加到名称为dst的列表头部 | src:源列表的键；dst:目标列表的key              |                             |                                            |                  |
+
+##### 有序集合
+
+有序集合比集合多了一个分数字段，利用它对集合排序
+
+| 方法                                                    | 作用                                                         | 参数说明                            | 示例                          | 示例说明 | 示例结果           |
+| ------------------------------------------------------- | ------------------------------------------------------------ | ----------------------------------- | ----------------------------- | -------- | ------------------ |
+| zadd(name,*args,**args)                                 | 添加元素，score用于排序，存在则更新                          | name:键名,score:分数，member:元素值 | redis.zadd('grade',100,'bob') |          | 返回添加的元素个数 |
+| zrem(name, *values)                                     | 删除键为name的zset中的元素                                   | name:键名 values:元素               | redis.zset('grade','Mike')    |          | 返回删除的元素个数 |
+| zincrby(name, value, amount=1)                          | 如果在键为name的zset中已经存在元素value,则将该元素的score增加amount，否则向该集合中添加该元素，其score的值为amount | value:元素amount:增长的score值      |                               |          |                    |
+| zrank(name, value)                                      | 返会键为name的zset中元素的排名，按score从小到大排序，即==名次== |                                     |                               |          |                    |
+| zrevrank(name,value)                                    | 返会键为name的zset中元素的倒数排名                           |                                     |                               |          |                    |
+| zrevrange(name,start,end,withscores=Flse)               | 返回键为name的zset中index从start到end的所有元素              |                                     |                               |          |                    |
+| zrangebyscore(name,min,max,start=None,withscores=False) | 返回键为name的zset中==score在给定区间的元素==                |                                     |                               |          |                    |
+| zcount(name, min, max)                                  | 返回键为name的zset中==score在给定区间的数量==                |                                     |                               |          |                    |
+| zcard(name)                                             | 返回键为name的zset的元素个数                                 |                                     |                               |          |                    |
+| zremrangebyrank(name,min,max)                           | 删除键为name的zset中排名在给定区间的元素                     |                                     |                               |          |                    |
+| zremrangebyscore(name, min,max)                         | 删除键为name的zset中score在给定区间的元素                    |                                     |                               |          |                    |
+
+##### 散列操作
+
+name指定散列表的名称，表内存储各个键值对
+
+| 方法                       | 作用                                             | 参数说明                              | 示例                                       | 示例说明 | 示例结果           |
+| -------------------------- | ------------------------------------------------ | ------------------------------------- | ------------------------------------------ | -------- | ------------------ |
+| hset(name,key,value)       | 向键为name的散列中添加映射                       | name:键名，key：映射键；value：映射值 | hset('price','cake',5)                     |          | 1,即添加的映射个数 |
+| hsetnx(name,key,value)     | 如果映射键名不存在，则向键为name的散列中添加映射 |                                       |                                            |          |                    |
+| hget(name, key)            | 返回键为name的散列中key对应的值                  |                                       |                                            |          |                    |
+| hmget(name,keys,*agrs)     | 返回键为name的散列中各个键对应的值               |                                       | redis.hmget('price',['apple','orange'])    |          |                    |
+| hmset(name,mapping)        | 向键为name的散列中添加映射                       |                                       | redis.hmset('price',{'banana':2,'pear':6}) |          |                    |
+| hincrby(name,key,amount=1) | 将键为name的散列中映射的值增加amount             |                                       | redis.hincrby('price','banana')            |          |                    |
+| hexists(name,key)          | 键为name的散列中是否存在键名为key的键            |                                       | redis.hexists('price', 'banana')           |          |                    |
+| hdel(name, *keys)          | 在键为name的散列中删除键名为key的映射            |                                       | redis.hdel('price', 'banana')              |          |                    |
+| hlen(name)                 | 从键为name的散列中获取映射个数                   |                                       |                                            |          |                    |
+| hkeys(name)                | 从键为name的散列中获取所有映射键名               |                                       |                                            |          |                    |
+| hvals(name)                | 从键为name的散列中获取所有映射键值               |                                       |                                            |          |                    |
+| hgetall(name)              | 获取所有键值对                                   |                                       |                                            |          |                    |
+
+##### RedisDump
+
+redisdump提供了强大的redis数据的导入和导出功能
+
+首先安装RedisDump
+
+提供了两个命令：redis-dump用于导出数据；redis-load用于导入数据
+
+- redis-dump
+
+  redis-dump -h 查看所有可选项
+
+- redis-load
+
+  redis-load -h
+
+
+
+
+
+
+
+
+
 
 
 ## 第六章 Ajax数据爬取
@@ -2147,14 +2454,232 @@ python提供了许多模拟浏览器的库，如 Selenium（硒）、splash、Py
 Selenium是一个自动化测试工具，可以驱动浏览器执行特定的动作，如点击、下拉等，同时还可以获取浏览器当前呈现页面的源代码，做到可见即可爬，对于一些JavaScript动态渲染的页面，这种方式非常有效
 #### 准备工作
 确保安装了Chrome浏览器并配置号了ChromeDriver,另外还需安装Python的Selenium库
+- 安装selenium :`pip install selenium`
+
+- 验证安装: `import selenium`
+
+- 安装ChromeDriver:
+  - 查看浏览器版本号
+  
+  - 下载对应版本的ChromeDriver
+  
+  - 将存放的路径加入环境变量
+  
+  - cmd中输入 chromedriver 弹出证明环境变量配置完成
+  
+    ![017](D:\project\pycon\web scrapy\img\017.png)
+  
+  - 随后再python窗口中写入
+  
+    ```python
+    from selenium import webdriver
+    browser = webdriver.Chrome()
+    ```
+  
+    运行后弹出空白的Chrome则证明配置完成
+  
+- 对于Firefox 浏览器，要安装GeckoDriver
+
+  ### PhantomJS的安装   （phantom---幽灵）
+
+  PhantomJS是一个无界面的、可脚本编程的WebKit浏览器引擎，原生支持多种Web标准，DOM操作、CSS选择器、JSON、Canvas、SVG
+
+  selenium支持phantomjs,这样运行的时候就不会出现一个浏览器了，PJS的运行效率高，支持各种参数配置
 #### 基本使用
+用selenium驱动加载网页的话，就可以拿到js渲染的结果了
 
+- 声明浏览器对象
 
+  selenium支持多种浏览器，如chrome、Firefox、Edge等, 初始化浏览器
 
+  ```python
+  from selenium import webdriver
+  
+  browser = webdriver.Chrome()
+  browser = webdriver.Firefox()
+  browser = webdriver.Edge()
+  browser = webdriver.PhantomJS()
+  browser = webdriver.safari()
+  ```
 
+- 访问页面
 
+  使用get方法请求，传入url即可
 
+  ```python
+  browser.get('https://www.taobao.com')
+  print(browser.page_source)
+  browser.close()
+  ```
 
+- 查找节点
+
+  selenium可以驱动浏览器完成各种操作，比如填充表单、模拟点击。
+
+  - 单个节点
+
+    ```python
+    browser.get('https://www.taobao.com')
+    input_first = browser.find_element_by_id("q")
+    input_second = browser.find_element_by_css_selector('#q')
+    input_third = browser.find_element_by_xpath('//*[@id="q"]')
+    print(input_first, input_second, input_third, sep='\n')
+    browser.close()
+    ```
+
+    ```
+    DevTools listening on ws://127.0.0.1:1875/devtools/browser/0b0305ed-40ab-4144-b56b-545369ad6cce
+    <selenium.webdriver.remote.webelement.WebElement (session="9834e05b5c3ccfb072b85d95a478ab0c", element="2ed8b6fa-c2ca-44ae-9d9d-dac3a2b53f85")>
+    <selenium.webdriver.remote.webelement.WebElement (session="9834e05b5c3ccfb072b85d95a478ab0c", element="2ed8b6fa-c2ca-44ae-9d9d-dac3a2b53f85")>
+    <selenium.webdriver.remote.webelement.WebElement (session="9834e05b5c3ccfb072b85d95a478ab0c", element="2ed8b6fa-c2ca-44ae-9d9d-dac3a2b53f85")>
+    ```
+
+    获取方法：
+
+    - find_element_by_id
+    - find_element_by_name
+    - find_element_by_xpath
+    - find_element_by_link_text
+    - find_element_by_partial_link_text
+    - find_element_by_tag_name
+    - find_element_by_class_name
+    - find_element_by_css_selector
+
+    还提供了find_element() 方法，需要传入查找方式by和值
+
+    就是find_element_by_xxx这中方法的函数版本，`find_element(By.ID, id)`
+
+  - 多个节点
+
+    如果查找目标有多个节点要使用find_elements()方法
+
+    ```python
+    from selenium import webdriver
+    from selenium.webdriver.common.by import By
+    
+    # 生成浏览器对象
+    browser = webdriver.Chrome()
+    # 发起请求
+    browser.get('https://www.taobao.com/')
+    # 获取对象
+    # lis = browser.find_elements(By.XPATH, '//ul[@class="service-bd"]//a')
+    lis = browser.find_elements(By.CSS_SELECTOR, 'ul.service-bd li a')
+    print(lis)
+    browser.close()
+    ```
+
+    获取方法：
+
+    - find_elements_by_id
+    - find_elements_by_name
+    - find_elements_by_xpath
+    - find_elements_by_link_text
+    - find_elements_by_partial_link_text
+    - find_elements_by_tag_name
+    - find_elements_by_class_name
+    - find_elements_by_css_selector
+
+    也可以使用find_elements()方法来传参
+
+- 节点交互
+
+  Selenium可以驱动浏览器来执行一些操作，常见 的用法有：输入文字时用 send_keys（）方法，清空文字时用 clear（）方法，点击按钮时用 click（）方法
+
+  ```python
+  # 打开网站，find_element获取输入框，send_keys输入文字，find_elements获取搜索结果，click完成搜索
+  
+  from selenium import webdriver
+from selenium.webdriver.common.by import By
+  import time
+  
+  brower = webdriver.Chrome()
+  brower.get('https://www.taobao.com')
+  input = brower.find_element(By.ID, 'q')
+  input.send_keys('灯具')
+  time.sleep(2)
+  input.clear()
+  input.send_keys('iPad')
+  button = brower.find_element(By.CSS_SELECTOR, '#J_TSearchForm > div.search-button > button')
+  button.click()
+  ```
+
+- 动作链
+
+  之前的交互动作针对的是单个节点执行，比如，输入框，我们就调用输入文字和清空文字的方法，对于按钮，我们调用点击方法
+
+  还有一些操作，没有特定的执行对象，比如拖拽鼠标，键盘按钮等，需要另外一种方式执行——动作链
+
+- 执行js
+
+  对于某些操作，selenium没有提供api,比如下拉进度条，可以直接模拟javaScript
+
+  使用execute_script() 实现
+
+  ```python
+  from selenium import webdriver
+  
+  browser = webdriver.Chrome()
+  browser.get('https://www.zhihu.com/explore')
+  browser.execute_script('window.scrollTo(0, document.body.scrollHeight)')
+  browser.execute_script('alert("To Bottom")')
+  ```
+
+  **scrollTo(*xpos,ypos*)**
+
+  browser.maximize_window()
+
+- 获取节点信息
+
+  page_source获取网页的源代码，接着就可以使用解析库来提取信息了
+
+  selenium提供了节点选择方法，返回webElement类型，也有相关的方法和属性来提取节点信息，如属性和文本，这样就不用通过解析源代码来提取信息了
+
+  - 获取属性
+
+    使用get_attribute()获取节点属性
+
+    ```
+    logo = browser.find_element_by_css_selector('a[aria-label="知乎"] > svg')
+    print(logo.get_attribute('width'))
+    ```
+
+  - 获取文本
+
+    每个webelement都有==text==属性，直接调用获取内部文本信息
+
+    相当于BeautifulSoup的get_text() 和 pyquery 的text()方法
+
+    ```
+    button = browser.find_element_by_css_selector('a.ExploreSpecialCard-title')
+    print(button.text)
+    ```
+
+  - 获取id、位置、标签名和大小
+
+    webElement还有其他的属性，比如location获取节点在页面相对位置，tab_name获取标签名称，size属性可以获取节点大小（宽高），这些属性有时候很有用
+
+    ```python
+    button = browser.find_element_by_css_selector('a.ExploreSpecialCard-title')
+    print(button.text)
+    # button.click()
+    print(button.id)
+    print(button.location)
+    print(button.size)
+    print(button.tag_name)
+    
+    >>>
+    电竞每日赛事速递
+    303c2e9b-a1ad-48a9-86b8-256f84ba7515
+    {'x': 534, 'y': 374}
+    {'height': 28, 'width': 330}
+    a
+    ```
+
+- 切换frame
+
+  
+
+[参数](https://zhuanlan.zhihu.com/p/60852696)
 
 
 
@@ -2193,3 +2718,26 @@ Selenium是一个自动化测试工具，可以驱动浏览器执行特定的动
 
 
 
+
+
+
+
+
+
+### aiohttp
+
+requests库是一个阻塞式HTTP请求库，发出请求后，程序会一直等待服务器响应，直到响应后才会进行下一步处理，这个过程比较耗时。如果程序再这个过程中做些其他的事情，比如请求的调度，响应的处理，那么爬取效率会大大提升。
+
+aiohttp就是一个这样提供异步web服务的库，从py3.5开始，加入了async/await关键字，使得回调的写法直观和人性化，aiohttp异步操作借助async/await关键字的写法更加简洁。
+
+用法：维护一个代理池时，利用异步的方式检测大量代理的运行状况，极大提升效率
+
+- 安装：`pips install aiohttp`
+
+  - 官方推荐安装：字符编码检测库cchardet、加速DNS 的解析库 aiodns
+
+    `pips install cchardet aiodns`
+
+- 测试安装：
+
+  `import aiohttp`
