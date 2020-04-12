@@ -5410,7 +5410,7 @@ from语句有破环命名空间的潜质---如果使用from导入变量碰巧和
 
 - 顶层的赋值语句创建模块属性
 
-- 模块的命名空间可通过属性\_\_dict\_\_或dir(M)获取
+- ==模块的命名空间==可通过属性==\_\_dict\_\_或dir(M)==获取
 
   由导入而建立的模块命名空间是字典，可通过模块对象关联的内置_\_dict\_\_属性来读取，而且能通过dir函数查看，dir函数包含了类继承的变量名
 
@@ -7064,7 +7064,9 @@ if __name__ == '__main__':
 
 #### OOP和组合：”有一个“关系
 
-组合就是指内嵌对象集合体，反应各组成部分之间的关系
+==组合==就是指内嵌对象集合体，反应各组成部分之间的关系
+
+组合涉及把其他对象嵌入容器对象中，并使其实现容器方法
 
 ```python
 from employee import PizzaRobot, Server
@@ -7081,6 +7083,7 @@ class Oven:
     def bake(self):
         print('oven bakes')
 
+# 是容器和控制器
 class PizzShop:
     def __init__(self):
         # 构造函数将导入的类实例化并将其嵌入
@@ -7102,17 +7105,221 @@ if __name__ == '__main__':
     scene.order('shaggy')
 ```
 
-组合与继承是互补的工具
+组合与继承是互补的工具，简单来说把对象实例化放到一个新的类里面叫做类的组合，组合指几个横向关系的类放在一起，纵向关系的类放在一起是继承，根据场景确定，组合用于‘有一个’的场景，继承用于‘是一个’的场景
+
+> 例如：
+>
+> 城市里有高楼，家里有家具，这类适合用组合
+>
+> ‘华为荣耀’是手机，oppo是手机，这类适合用继承
 
 ##### 重访流处理器
 
+```python
+class Processor:
+    def __init__(self, reader, writer):
+        self.reader = reader
+        self.writer = writer
+    def process(self):
+        while 1:
+            data = self.reader.readline()
+            if not data: break
+            data = self.converter(data)
+            self.writer.write(data)
+    def converter(self, data):
+        assert False,'converter must be defined'
+```
+
+类定义了一个转换器方法，期待子类来填充，读取器和写入器内嵌在类示例当中（组合）,我们是在子类内提供转换器的逻辑，而不是传入一个转换器（继承）
+
+定义一个转换器,可以传入包装在类中的任何对象
+
+```python
+from streams import Processor
+
+class Uppercase(Processor):
+    # 继承并重写converter方法
+    def converter(self, data):
+        return data.upper()
+
+# 定义一个writer
+class HTMLize:
+    def write(self, line):
+        print('<PRE>%s</PRE>' % line.rstrip())
+
+if __name__ == '__main__':
+    import sys
+
+    obj = Uppercase(open('spam.txt'), sys.stdout)
+    obj.process()
+    Uppercase(open('spam.txt'), HTMLize()).process()
+```
+
+#### OOP和委托：“包装”对象
+
+委托：通常就是指控制器对象内嵌其它对象，而把运算请求传给那些对象
+
+委托通常是以`__getattr__`钩子方法实现的，因为这个方法会拦截对不存在属性的读取，包装类可以使用`__getattr__`把任意读取转发给被包装对象
+
+```python
+class wrapper:
+    def __init__(self, object):
+        # object 是所有类的基类
+        self.wrapped = object
+    def __getattr__(self, attrname):
+        print('Trace', attrname)
+        print(attrname)
+        return getattr(self.wrapped, attrname)
+
+'''
+>>> from delegation import wrapper
+>>> x = wrapper([1,2,3])
+>>> x.append(4)
+Trace append
+append
+'''
+```
+
+可以使用这个模块包装类的做法，管理任何带有属性的对象的存取：列表，字典甚至类和实例
+
+wrapper类只是在每个属性读取时打印跟踪消息，并把属性请求委托给嵌入的wrapped对象
+
+#### 类的伪私有属性
+
+每个模块文件顶层赋值的变量都会导出，默认情况下，类也是这样，数据隐藏是一个惯例，客户端可以读取或修改任何他们想要的类或实例的属性。
+
+python支持变量名压缩的概念，让类内的某些变量局部化，压缩后的变量名有时会被认为是‘私有属性’，其实是一种把类所创建的变量名局部化的方式而已：名称压缩无法阻止类外代码对它的读取
+
+主要是为了避免实例内的命名空间冲突，而不限制变量名的读取，压缩的变量名最好称为‘伪私有’，而不是“私有”
+
+伪私有变量名是高级且完全可选的功能，多人大项目中作用突出
+
+python程序员用一个单个的下划线来编写内部名称（\_X）,这是非正式的惯例，让你知道这是一个不应该修改的名字。
+
+##### 变量名压缩概览
+
+- class语句内开头有两个下划线，但结尾没有两个下划线的变量名，会自动扩张，从而包含了所在类的名称
+
+  > 如： Spam内 ==\_\_X== 这样的变量名会自动变成   ==\_Spam\_\_X==
+  >
+  > 原始变量名前面会加上一个下划线和类名称，相当于变得独特，不会和同一层次中其他类创建的变量名类似变量名冲突
+
+- 变量名压缩只发生在class语句内，只针对开头有两个下划线的变量名。
+
+  每个开头有两个下划线的变量名都会发生这件事，包括方法名称和实例属性名称
+
+  > 例如： 在Spam内，引用的self.\_\_X实例属性会变成 self.\_Spam\_\_X
+  >
+  > 不止有一个类在给实例新增属性，所以这种方法有助于避免变量冲突
+
+##### 为什么使用伪私有属性
+
+python类方法中，当方法赋值self属性时（ self.attr = value）,就会子在该实例内修改或创建该属性（继承搜索只发生在引用时，而不是赋值时）。在类层次中有多个类赋值相同的属性，也是如此，可能发生冲突
 
 
 
+```python
+# __例1__：假设一个程序员编写一个类，他认为属性名称X是在该实例中，在类的方法中，变量被设定，然后取出
+class C1:
+    def meth1(self): self.X = 88             # I assume X is Mine
+    def meth2(self): print(self.X)
+# __例2__: 另一个程序员独立作业，他对类也有同样的假设
+class C2:
+    def metha(self): self.X = 99             # Me too
+    def methb(self): print(self.X)
+# 这两个类各行其事，当混合在相同类树中，问题就出现了
+class C3(C1, C2):
+    pass
+I = C3()                                     # only 1X in I
+```
 
+为了保证属性会属于它的类，可以在类的任何地方使用，在变量前面加两个下划线
 
+```python
+class C1:
+    def meth1(self): self.__X = 88
+    def meth2(self): print(self.__X)
+class C2:
+    def metha(self): self.__X = 99
+    def methb(self): print(self.__X)
+class C3(C1, C2): pass
 
+I = C3()
+print(I.__dict__)
+I.meth1(); I.meth2()
+print(I.__dict__)
+I.metha(); I.methb()
+print(I.__dict__)
 
+'''
+{}
+88
+{'_C1__X': 88}
+99
+{'_C1__X': 88, '_C2__X': 99}
+'''
+# 继承类实例化后变量才会进入主类的变量中
+```
+
+加了双下划线前缀，属性会扩张从而包含它的类名称，让变量在实例内变得独特
+
+在较大的框架中，既可以避免引入可能在类树中某处偶然隐藏定义的方法名，也可以减少内部方法在被树的低处定义名称替代的机会。==如果一个方法倾向于只在一个可能混合到其他类的类中使用，在前面使用双下划线，以确保该方法不受到树种其他名称的干扰，特别是多继承环境
+
+只有当单个类真的需要控制某些变量时才使用这个功能
+
+#### 方法是对象：绑定或无绑定
+
+方法也是一种对象，可以用与其他对象大部分相同的方式来使用——赋值，传递给函数，存储在数据结构等，
+
+由于方法可以从一个实例或一个类种访问，实际上有两种形式：
+
+- 无绑定类方法对象：无self
+
+  通过对类进行==点号运算==从而获得类的函数属性，会传回无绑定的（unbound）方法对象。调用该方法时必须明确提供实例对象作为第一个参数。python3中无绑定方法和简单的函数相同，可以通过类名来调用
+
+- 绑定类方法对象：self + 函数对
+
+  通过对==实例进行全运算==从而获取类的函数属性，会传回绑定（bound）方法对象。python在绑定方法对象中自动把实例和函数打包，所以不用传递实例取调用该方法
+
+这两种方法都是功能齐全的对象，可四处传递，就像字符串和数字。执行时，两者都需要他们在第一参数中的实例（也就是self的值）。
+
+```python
+class Spam:
+    def doit(self, message):
+        print(message)
+object1 = Spam()
+object1.doit('hello world')
+# 绑定方法对象是在过程中产生的，就在方法调用的括号前
+# 可以获取绑定方法而不进行实际的调用
+# object.name 点号运算是一个对象表达式
+# 创建实例
+object2 = Spam()
+x = object2.doit        # 绑定方法对象，将其赋值给另外一个变量，就可以像函数一样进行调用
+x('hello world')
+
+# 如果对类(不带括号)进行点号运算获得方法，会得到无绑定方法对象，调用这类方法，必须传入实例作为左侧参数
+object3 = Spam()
+t = Spam.doit          #对类进行点号运算——无绑定方法对象
+t(object3, 'hello world')
+```
+
+如果我们引用的self的属性是引用类中的函数，以上相同规则也适用于类方法，self.method是绑定方法对象，self是实例对象
+
+```python
+class Eggs:
+    def m1(self, n):
+        print(n)
+    def m2(self):
+        x = self.m1     # 绑定方法对象
+        x(42)
+Eggs().m2()
+```
+
+==无绑定方法一般需要传入明确的实例对象==
+
+##### 在python3中，无绑定方法是函数
+
+pag789
 
 
 
