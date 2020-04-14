@@ -16,4 +16,4 @@ print(Selfless.selfless(3,4))
 # 非绑定方法通过实例调用会报错
 # X.selfless(3,4)
 # 类调用绑定方法（不传实例）会报错，
-Selfless.normal(3,4)
+# Selfless.normal(3,4)

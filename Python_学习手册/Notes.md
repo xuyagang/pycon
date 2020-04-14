@@ -7321,6 +7321,8 @@ Eggs().m2()
 
 只有对通过实例调用，python才会向方法传递一个实例，当通过一个类调用的时候，只有在方法期待一个实例的时候，才必须手动传递一个实例
 
+python3中没有self参数的方法，，不会接受一个实例参数。
+
 ```python
 class Selfless:
     def __init__(self, data):
@@ -7332,17 +7334,97 @@ class Selfless:
 
 X = Selfless(2)
 print(X.normal(3,4))
-# 9
+> 9
+# 常规调用
 print(Selfless.normal(X, 3, 4))
-# 9
+> 9
+# 无绑定调用
 print(Selfless.selfless(3,4))
-# 7
+> 7
 
-# 非绑定方法通过实例调用会报错
+# 实例调用非绑定方法会报错
 # X.selfless(3,4)
-# 类调用绑定方法（不传实例）会报错，
+# 类调用绑定方法不传实例会报错，
 # Selfless.normal(3,4)
 ```
+
+##### 绑定方法和其他可调用对象
+
+绑定方法可以作为一个通用对象处理，可以任意在一个程序中传递，可以像任何可调用对象对待
+
+```python
+class Number:
+    def __init__(self, base):
+        self.base = base
+    def double(self):
+        return self.base * 2
+    def triple(self):
+        return self.base * 3
+x = Number(2)
+y = Number(3)
+z = Number(4)
+# 调用绑定对象
+print(x.double(), y.double(), y.triple(), z.double())
+#  4 6 9 8
+```
+
+绑定方法有自己的内省信息，包括配对的实例对象和方法函数访问的属性。
+
+```python
+bound = x.double
+print(bound.__self__, bound.__func__)
+print(bound.__self__.base)
+# <__main__.Number object at 0x00000158466FE588> <function Number.double at 0x00000158466C6828>
+# 2
+```
+
+绑定方法只是python众多可调用对象中的一种，简单函数编写为一个def或lambda,实例继承一个\_\_call\_\_,绑定实例方法都能以相同的方式调用：
+
+```python
+def square(arg):
+    return arg ** 2
+
+class Sum:
+    def __init__(self, val):
+        self.val = val
+        # 类中定义__call__方法可以让实例变成一个可调用函数
+    def __call__(self, arg):
+        return self.val + arg
+class Product:
+    def __init__(self, val):
+        self.val = val
+    def method(self, arg):
+        return self.val * arg 
+   
+sobj = Sum(2)
+pobj = Product(3)
+actions = [square, sobj, pobj.method]
+for act in actions:
+    print(act(5))
+```
+
+##### 为何要关注：绑定方法和回调函数
+
+绑定方法自动让实例和类方法函数配对，可以在任何希望得到简单函数的地方使用。最常见的调用就是把方法注册成tkinterGUI 接口中事件回调处理器的代码
+
+```python
+def handler():
+    '''use global for state'''
+    
+widget = Button(text='spam', command=handler)
+```
+
+为按钮点击事件注册一个处理器，通常是将一个不带参数的可调用对象传递给command关键字。函数名和lambda都可以使用，类的绑定方法也可以。
+
+```python
+class Mywidget:
+    def handler(self):
+        '''use global for state'''
+    def makewidgets(self):
+        b = Button(text='spam', command=self.handler)
+```
+
+#### 多重继承：混合类
 
 
 
