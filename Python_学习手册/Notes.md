@@ -7317,9 +7317,34 @@ Eggs().m2()
 
 ==无绑定方法一般需要传入明确的实例对象==
 
-##### 在python3中，无绑定方法是函数
+##### 在python3中，无绑定方法(无self)是函数
 
-pag789
+只有对通过实例调用，python才会向方法传递一个实例，当通过一个类调用的时候，只有在方法期待一个实例的时候，才必须手动传递一个实例
+
+```python
+class Selfless:
+    def __init__(self, data):
+        self.data = data
+    def selfless(arg1, arg2):
+        return arg1 + arg2
+    def normal(self, arg1, arg2):
+        return self.data + arg1 + arg2
+
+X = Selfless(2)
+print(X.normal(3,4))
+# 9
+print(Selfless.normal(X, 3, 4))
+# 9
+print(Selfless.selfless(3,4))
+# 7
+
+# 非绑定方法通过实例调用会报错
+# X.selfless(3,4)
+# 类调用绑定方法（不传实例）会报错，
+# Selfless.normal(3,4)
+```
+
+
 
 
 
