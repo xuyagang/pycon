@@ -2281,19 +2281,20 @@ Redis提供了列表存储，列表内的元素可以重复，可以从两端存
 
 有序集合比集合多了一个分数字段，利用它对集合排序
 
-| 方法                                                    | 作用                                                         | 参数说明                            | 示例                          | 示例说明 | 示例结果           |
-| ------------------------------------------------------- | ------------------------------------------------------------ | ----------------------------------- | ----------------------------- | -------- | ------------------ |
-| zadd(name,*args,**args)                                 | 添加元素，score用于排序，存在则更新                          | name:键名,score:分数，member:元素值 | redis.zadd('grade',100,'bob') |          | 返回添加的元素个数 |
-| zrem(name, *values)                                     | 删除键为name的zset中的元素                                   | name:键名 values:元素               | redis.zset('grade','Mike')    |          | 返回删除的元素个数 |
-| zincrby(name, value, amount=1)                          | 如果在键为name的zset中已经存在元素value,则将该元素的score增加amount，否则向该集合中添加该元素，其score的值为amount | value:元素amount:增长的score值      |                               |          |                    |
-| zrank(name, value)                                      | 返会键为name的zset中元素的排名，按score从小到大排序，即==名次== |                                     |                               |          |                    |
-| zrevrank(name,value)                                    | 返会键为name的zset中元素的倒数排名                           |                                     |                               |          |                    |
-| zrevrange(name,start,end,withscores=Flse)               | 返回键为name的zset中index从start到end的所有元素              |                                     |                               |          |                    |
-| zrangebyscore(name,min,max,start=None,withscores=False) | 返回键为name的zset中==score在给定区间的元素==                |                                     |                               |          |                    |
-| zcount(name, min, max)                                  | 返回键为name的zset中==score在给定区间的数量==                |                                     |                               |          |                    |
-| zcard(name)                                             | 返回键为name的zset的元素个数                                 |                                     |                               |          |                    |
-| zremrangebyrank(name,min,max)                           | 删除键为name的zset中排名在给定区间的元素                     |                                     |                               |          |                    |
-| zremrangebyscore(name, min,max)                         | 删除键为name的zset中score在给定区间的元素                    |                                     |                               |          |                    |
+| 方法                                                    | 作用                                                         | 参数说明                                    | 示例                          | 示例说明 | 示例结果           |
+| ------------------------------------------------------- | ------------------------------------------------------------ | ------------------------------------------- | ----------------------------- | -------- | ------------------ |
+| zadd(name,*args,**args)                                 | 添加元素，score用于排序，存在则更新                          | name:键名,==score==:分数，==member==:元素值 | redis.zadd('grade',100,'bob') |          | 返回添加的元素个数 |
+| zrem(name, *values)                                     | 删除键为name的zset中的元素                                   | name:键名 values:元素                       | redis.zset('grade','Mike')    |          | 返回删除的元素个数 |
+| zincrby(name, value, amount=1)                          | 如果在键为name的zset中已经存在元素value,则将该元素的score增加amount，否则向该集合中添加该元素，其score的值为amount | value:元素amount:增长的score值              |                               |          |                    |
+| zrank(name, value)                                      | 返会键为name的zset中元素的排名，按score从小到大排序，即==名次== |                                             |                               |          |                    |
+| zscore(name,member)                                     | 返回有序集中，成员的分数值                                   |                                             |                               |          |                    |
+| zrevrank(name,value)                                    | 返会键为name的zset中元素的倒数排名                           |                                             |                               |          |                    |
+| zrevrange(name,start,end,withscores=Flse)               | 返回键为name的zset中index从start到end的所有元素              |                                             |                               |          |                    |
+| zrangebyscore(name,min,max,start=None,withscores=False) | 返回键为name的zset中==score在给定区间的元素==                |                                             |                               |          |                    |
+| zcount(name, min, max)                                  | 返回键为name的zset中==score在给定区间的数量==                |                                             |                               |          |                    |
+| zcard(name)                                             | 返回键为name的zset的元素个数                                 |                                             |                               |          |                    |
+| zremrangebyrank(name,min,max)                           | 删除键为name的zset中排名在给定区间的元素                     |                                             |                               |          |                    |
+| zremrangebyscore(name, min,max)                         | 删除键为name的zset中score在给定区间的元素                    |                                             |                               |          |                    |
 
 ##### 散列操作
 

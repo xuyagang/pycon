@@ -5725,6 +5725,14 @@ _\_all\_\_是指出要复制的变量，\_x是指出不被复制的变量
 
 python 会先寻找_\_all\_\_列表，如果没有定义，会复制开头没有下划线的所有变量名
 
+```python
+__foo__: 定义的是特殊方法，一般是系统定义名字
+_foo: 以单下划线开头的表示的是 protected 类型的变量，即保护类型只能允许其本身与子类进行访问，不能用于 from module import *
+__foo: 双下划线的表示的是私有类型(private)的变量, 只能是允许这个类本身进行访问了
+```
+
+
+
 #### 混合用法模式：_\_name\_\_ 和 _\_main\_\_
 
 这是特殊的模块技巧，可以把文件作为模块导入，并以独立程序的形式运行
@@ -5737,8 +5745,6 @@ python 会先寻找_\_all\_\_列表，如果没有定义，会复制开头没有
 模块可以自己检测自己的_\_name\_\_,来确定是在执行还是导入
 
 `if __name__ == "__main__:"`
-
-
 
 - 实际上一个模块的_\_name\_\_变量充当一个使用模式标志
 
@@ -6316,7 +6322,7 @@ x.name = 'adam'
 print(rec.name, x.name, y.name)
 ```
 
-`__dict__`属性是针对大多数基于类的对象的命名空间字典
+`__dict__`属性是针对大多数基于类的对象的==命名空间字典==
 
 ```python
 print(rec.__dict__)
@@ -6332,7 +6338,7 @@ print(y.__dict__.keys())
 dict_keys([])
 ```
 
-`__class__`没个实例都连接至类，便于继承
+`__class__`每个实例都连接至类，便于继承
 
 ```python
 print(x.__class__)
@@ -6340,7 +6346,7 @@ print(x.__class__)
 <class '__main__.rec'>
 ```
 
-`__bases__`属性是超类的元组
+`__bases__`属性是==超类的元组==
 
 ```python
 print(rec.__bases__)
@@ -6887,10 +6893,26 @@ import docstr
 #### 小结
 
 - 抽象类是会调用方法的类，没有继承或定义该方法，而是期待该方法由子类填补，当行为无法预测，得等到更为具体的子类编写时才知道，通常可以使用这种方式把类通用化，
+
 - 简单语句（x = y）出现在类语句顶端时，会把数据属性附加在这个类上（class.x）,会由所有的实例共享
+
 - 当类定义自己的`__init__`函数，但也必须启用超类构建其代码，就必须手动调用超类的`__init__`方法，python只会自动执行一个构造函数（树中最低的那个），超类的构造函数是通过类名称来调用，手动传入self实例 ：`superclass.__init__(self, ...)`
 
 - 要增强继承的方法而不是完全替代，还得在子类中重新定义，但要从子类的新版方法中手动回调超类版本的方法，也就是把self实例手动传给超类的这个方法：`superclass.method(self,...)`
+
+- self 代表类的实例，self 在定义类的方法时是必须有的,类的方法与普通的函数只有一个特别的区别——它们必须有一个额外的**第一个参数名称**
+
+- python内置类属性
+
+  ```
+  __dict__ : 类的属性（包含一个字典，由类的数据属性组成）
+  __doc__ :类的文档字符串
+  __name__: 类名
+  __module__: 类定义所在的模块（类的全名是'__main__.className'，如果类位于一个导入模块mymod中，那么className.__module__ 等于 mymod）
+  __bases__ : 类的所有父类构成元素（包含了一个由所有父类组成的元组）
+  ```
+
+  
 
 ### 第二十九章_运算符重载
 
@@ -6911,7 +6933,7 @@ import docstr
 | 方法         | 重载     | 调用                     |
 | ------------ | -------- | ------------------------ |
 | \_\_init\_\_ | 构造函数 | 对象建立：X= Class(args) |
-| _\_del\_\_   | 析构函数 | x对象回收                |
+| _\_del\_\_   | 析构函数 | x对象回收,在对象销毁的时候被调用，当对象不再被使用时，__del__方法运行 |
 | _\_add\_\_  |  运算+ |                          |
 | _\_or\_\_ | 运算符 \|（位 or） |                          |
 | _\_repr\_\_,_\_str\_\_ | 打印、转换 | print(x),repr(x),str(x) |
@@ -7426,7 +7448,118 @@ class Mywidget:
 
 #### 多重继承：混合类
 
+class语句中，首行括号内可以列出一个以上的超类，这样就是在使用多重继承，类和其实例继承了所有超类的变量名
 
+搜说属性时，python会由左至右搜索类首行中的超类。对于更大的类树，搜索更复杂
+
+- 传统类（默认的类，直到python3.0）中，属性搜索对所有路径深度优先，然后从左到右
+- 新式类（以及python3.0的所有类中）中，属性搜索沿着层级广度优先
+
+当一个类拥有多个超类的时候，他们会根据class语句头部行中列出的顺序从左到右查找，使用多重继承，对象获得了所有超类中行为的组合
+
+##### 编写混合显示类
+
+可以提供一个\_\_str\_\_or \_\_repr\_\_,以实现制定后的字符串表达形式。可以在一个通用类中编写一次，其他需要的类继承即可
+
+编码一组3个混合类，这三个类充当通用的显示工具，可以列出类树上所有对象的实例属性、继承属性和属性
+
+##### _\_dict\_\_列出实例属性
+
+```python
+# 每个实例都有一个__class__属性，用来引用创建自己的类，
+# 每个类都有__name__属性，引用了头部的名称
+# 表达式 self.__class__.__name__ 获取实例类的名称
+```
+
+- id（Instance）获取实例的内存地址，id()返回任何对象的地址
+- 伪私有命名模式：为了保证不能在class之外访问私有变量,Python会在类的内部自动的把我们定义的\_\_spam私有变量的名字替换成为==_classname\_\_spam==  (注意,classname前面是一个下划线,spam前是两个下划线)
+
+```python
+# lister.py
+class ListInstance:
+    """
+    Mix-in class that provides a formatted print() or str() of
+    instances via inheritance of __str__, coded here; displays
+    instance attrs only; self is the instance of lowest class;
+    use __X names to avoid clashing with client's attrs
+    """
+    def __str__(self):
+        # 所有派生自该类的实例在打印的时候会调用该方法
+        return 'Instance of %s, address %s:\n%s' %(
+            self.__class__.__name__,
+            id(self),
+            self.__attrnames()
+        )
+    def __attrnames(self):
+        result = ''
+        for attr in sorted(self.__dict__):
+            result += '\tname %s=%s\n' %(attr, self.__dict__[attr])
+        return result
+```
+
+```python
+if __name__ == '__main__':
+    class Spam(ListInstance):
+        def __init__(self):
+                self.data1 = 'food'
+    x = Spam()
+    print(x)
+    # 获取输出为字符串显示
+    print(repr(str(x)))
+```
+
+ListInstance对于任何类都有用，即使类已经有多个超类，这就是多继承的用武之地
+
+```python
+from lister import *
+
+class Super:
+    def __init__(self):
+        self.data1 = 'spam'
+    def ham(self):
+        pass
+
+class Sub(Super, ListInstance):
+    def __init__(self):
+        Super.__init__(self)
+        self.data2 = 'eggs'
+        self.data3 = 42
+    def spam(self):
+        pass
+
+if __name__ == '__main__':
+    X = Sub()
+    print(X)
+>>>
+Instance of Sub, address 2597402912776:
+        name data1=spam
+        name data2=eggs
+        name data3=42
+```
+
+LIstInstance在它混入的任何类中都有效，因为self引用拉入了这个类的子类的一个实例。
+
+混合类是模块的类等价形式——在各种客户中都有用的方法包
+
+对于类继承类之外的属性设置也起作用
+
+```python
+import lister
+class C(lister.ListInstance):
+    pass
+x = C()
+x.a = 1
+x.b = 2
+x.c = 3
+print(x)
+>>>
+Instance of C, address 2296491508616:
+        name a=1
+        name b=2
+        name c=3
+```
+
+##### 使用dir列出继承的属性
 
 
 
