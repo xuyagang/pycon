@@ -7127,7 +7127,7 @@ if __name__ == '__main__':
     scene.order('shaggy')
 ```
 
-组合与继承是互补的工具，简单来说把对象实例化放到一个新的类里面叫做类的组合，组合指几个横向关系的类放在一起，纵向关系的类放在一起是继承，根据场景确定，组合用于‘有一个’的场景，继承用于‘是一个’的场景
+组合与继承是互补的工具，简单来说把对象实例化放到一个新的类里面叫做类的组合，==组合指几个横向关系的类放在一起==，==纵向关系的类放在一起是继承==，根据场景确定，组合用于‘有一个’的场景，继承用于‘是一个’的场景
 
 > 例如：
 >
@@ -7561,47 +7561,87 @@ Instance of C, address 2296491508616:
 
 ##### 使用dir列出继承的属性
 
+python3中更多的属性显示出来，因为所有的类是新式的，并从隐式的object那里继承了名称
 
+- **dir()** 函数不带参数时，返回当前范围内的变量、方法和定义的类型列表；带参数时，返回参数的属性、方法列表。如果参数包含方法__dir__()，该方法将被调用。如果参数不包含__dir__()，该方法将最大限度地收集参数信息
 
+- 使用**getattr**内置函数获取属性
 
+  返回对象属性名对应的值
 
+  - ```
+    getattr(object, name[, default])
+    ```
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+```python
+class ListInherited:
+    def __str__(self):
+        return '<instance of %s , address %s:\n%s>' %(
+            self.__class__.__name__,
+            id(self),
+            self.__attrenames()
+        )
+    def __attrenames(self):
+        results = ''
+        for attr in dir(self):
+            if attr[:2] == '__' and attr[-2:] == '__':
+                results += '\tname %s=<>\n' % attr
+            else:
+                results += '\tname %s=%s\n' %(attr, getattr(self, attr))
+        return results
+```
 
 
 
 ### 第三十一章_类的高级主题
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 ## 第七章_异常和工具
 
