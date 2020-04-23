@@ -7596,8 +7596,11 @@ class ListInherited:
 ### 第三十一章_类的高级主题
 
 - 对于python3,所有的类都是“新式类”，所有的类都是继承自object, 所有对象是object的实例
+
 - 新式类的特性是常规的类特性
+
 - 类就是类型，二者同义
+
 - `type(I)`返回实例所创建自的类，通常和`.__class__`相同
 
 - 类实例的类型是它所产生自的类，类的类型是type类
@@ -7653,10 +7656,99 @@ class ListInherited:
   >
   > - 因为实例会自动传给方法，而方法没有参数来接受它
 
-  
+  ##### 静态方法替代方案
 
+  ```python
+def printNumInstances():
+      print('Number of instance created: ', Spam.numInstances)
   
-
+  class Spam:
+      numInstances = 0
+      def __init__(self):
+          Spam.numInstances += 1
+  
+  if __name__ == '__main__':
+      a = Spam()
+      b = Spam()
+      c = Spam()
+      print(printNumInstances())
+      print(printNumInstances())
+  >>>
+  Number of instance created:  3
+  None
+  Number of instance created:  3
+  None
+  ```
+  
+  类名称对简单函数而言是可读取的全局变量，在以上单个模块中，函数名也是全局变量
+  
+  模块是命名空间分隔工具，通常不需要把函数放到类中，除非它实现了对象行为
+  
+  以上案例的缺点：
+  
+  > - 给文件作用域增加了一个额外名称
+  > - 函数与类的关系小，不能通过继承定制，子类不能通过重新定义这样的函数来扩展它
+  
+  ```python
+  # 升级版本
+  class Spam:
+      numInstances = 0
+      def __init__(self):
+          Spam.numInstances += 1
+      def printNumInstances(self):
+          print(f'{Spam.numInstances}')
+  
+  a, b, c = Spam(), Spam(), Spam()
+  a.printNumInstances()
+  print(Spam.numInstances)
+  print(Spam().printNumInstances())
+  
+  >>>
+  3
+  3
+  4
+  None
+  ```
+  
+  最后一行类的实例调用改变了计数，下面我们使用静态方法把类中的一个方法标记为不需要实例
+  
+  ##### 使用静态方法和类方法
+  
+  python支持三种类相关的方法：实例，静态和类
+  
+  实例方法一定要用实例对象调用，通过实例调用时，python会把实例自动传给第一个参数，类调用时需要手动传入实例
+  
+  ```python
+  class Methods:
+      def imeth(self,x):
+          print(self, x)
+      def smeth(x):
+          print(x)
+      def cmeth(cls,x):
+          print(cls, x)
+      smeth = staticmethod(smeth)
+      cmeth = classmethod(cmeth)
+  # make an instance
+  obj = Methods()
+  
+  # 常规实例调用方式,第一个参数自动传入
+  obj.imeth(1)
+  # 等价方法，类调用，手动传入实例参数
+  Methods.imeth(obj, 2)
+  
+  # 静态方法
+  Methods.smeth(3)
+  obj.smeth(4)
+  
+  # # 类方法
+  Methods.cmeth(4)
+  obj.cmeth(5)
+  ```
+  
+  
+  
+  
+  
   
 
 
