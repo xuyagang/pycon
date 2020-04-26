@@ -7741,15 +7741,183 @@ def printNumInstances():
   obj.smeth(4)
   
   # # 类方法
-  Methods.cmeth(4)
-  obj.cmeth(5)
+  Methods.cmeth(4)  # cmeth(Methods,4)
+  obj.cmeth(5)      # cmeth(Methods,5)
+  ```
+  
+  - staticmethod() 和 classmethod()
+  
+    - staticmethod(function)
+  
+      staticmethod 返回函数的静态方法,该方法不强制要求传递参数，如下声明一个静态方法
+  
+    ```python
+    class C(object):
+        @staticmethod
+        def f(arg1, arg2, ...):
+            ...
+    ```
+  
+    ```python
+    class C1(object):
+        @staticmethod
+        class C2(object):
+            def __init__(self, val = 1):
+                self.val = val
+            def shout(self):
+                print("Python世界第%d!"%self.val)
+    tmp = C1.C2(0)
+    print(type(tmp))    # 输出 : <class '__main__.C1.C2'>
+    tmp.shout()         # 输出 : Python世界第0!
+    ```
+  
+  ##### 使用静态方法统计实例
+  
+  把方法标记为特殊，以便不会自动传入一个实例,可通过类或实例来调用无self方法
+  
+  ```python
+  class Spam:
+      numInstances = 0
+      def __init__(self):
+          Spam.numInstances += 1
+      def printNumInstances():
+          print(f'Num of instances:{Spam.numInstances}')
+      # 声明静态方法
+      printNumInstances = staticmethod(printNumInstances)
+      
+  a,b,c = Spam(),Spam(),Spam()
+  Spam.printNumInstances()
+  a.printNumInstances()
+  
+  >>>
+  Num of instances:3
+  Num of instances:3
+  ```
+  
+  相比之前的方法，这个版本额外调用了staticmethod, 这样把函数名称变成类作用域中的局部变量，避免和模块内其他变量名的冲突，而且把代码移动到靠近其使用的地方，==允许子类用==集成定制静态方法
+  
+  - 子类的测试版本
+  
+  ```python
+  class Sub(Spam):
+      def printNumInstances():
+          print('Extra stuff...')
+          Spam.printNumInstances()
+      printNumInstances = staticmethod(printNumInstances)
+      
+  a,b = Sub(), Sub()
+  a.printNumInstances()
+  Sub.printNumInstances()
+  Spam.printNumInstances()
+  
+  >>>
+  Extra stuff...
+  Num of instances:5
+  Extra stuff...
+  Num of instances:5
+  Num of instances:5
+  ```
+  
+  - 类可以继承静态方法，可以无实例运行
+  
+    ```python
+    class Other(Spam):
+        pass
+        
+    c = Other()
+    c.printNumInstances()
+    Other.printNumInstances()
+    
+    >>>
+    Num of instances:8
+    Num of instances:8
+    ```
+  
+  ##### 使用类方法统计实例
+  
+  类方法接受实例树中的最低类，类方法更适合于处理对层级中每个类不同的数据
+  
+  ```python
+  class Spam:
+      numInstances = 0
+      def count(cls):
+          cls.numInstances += 1
+      def __init__(self):
+          self.count()
+      count = classmethod(count)
+  
+  class Sub(Spam):
+      # 重置计数，避免超类计数的影响
+      numInstances = 0
+      def __init__(self):
+          Spam.__init__(self)
+  
+  class Other(Spam):
+      numInstances = 0
+  
+  class test(Spam):
+      # 没有重置计数，计数会使用之前超类中的，会导致混乱
+      pass
+  
+  x = Spam()
+  y1,y2 = Sub(),Sub()
+  z1,z2,z3 = Other(),Other(),Other()
+  ```
+  
+  ```python
+  print(x.numInstances)
+  print(y1.numInstances, y2.numInstances)
+  print(z1.numInstances)
+  print(test.numInstances)
+  >>>
+  1
+  2 2
+  3
+  1
+  
+  print(Spam.numInstances)
+  print(Sub.numInstances)
+  print(Other.numInstances)
+  print(test.numInstances)
+  >>>
+  1
+  2
+  3
+  1
   ```
   
   
-  
-  
-  
-  
+
+#### 装饰器和元类：第一部分
+
+装饰语法是把一个函数应用与另外一个函数的方法
+
+函数装饰器除了静态方法用法外，有可以用于新增多种逻辑的函数，类似于委托涉及模式，为了增强特定函数或方法的调用
+
+##### 装饰器基础
+
+函数装饰器是它后面函数运行时的申明，在定义函数或方法的def语句前，由@符号、后面跟着元函数组成
+
+```python
+# 两种等价的方式
+class C:
+    @staticmethod
+    def meth():
+        pass
+
+class C:
+    def meth():
+        pass
+    meth = staticmethod(meth)
+```
+
+装饰器会传回任何种类的对象，如原始函数或者新对象
+
+staticmethod是一个函数，可以用于装饰器语法中，只是因为它把一个函数当作参数并且返回一个可调用对象
+
+##### 装饰器例子
+
+
 
 
 
