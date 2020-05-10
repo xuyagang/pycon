@@ -7917,55 +7917,162 @@ staticmethod是一个函数，可以用于装饰器语法中，只是因为它�
 
 ##### 装饰器例子
 
+python有很多内置函数，可用作装饰器，也可以自己编写装饰器
+
+`__call__`运算符重载方法为类实例实现函数调用接口
+
+```python
+class tracer:
+    def __init__(self, func):
+        self.calls = 0
+        self.func = func
+    
+    # *args中保留了被装饰函数的参数
+    def __call__(self, *args):
+        self.func(*args)
+        self.calls += 1
+        print("call %s to %s" % (self.calls, self.func.__name__))
+
+@tracer
+def spam(a,b,c):
+    print(a,b,c)
+
+spam(1,2,3)
+spam('a', 'b', 'c')
+spam(4,5,6)
+```
+
+##### 类装饰器和元类
+
+类装饰器类似于函数装饰器，在class语句的末行运行，把类名重新绑定到一个可调用对象，代码结构如下：
+
+```python
+def decorator(aClass):
+    # 装饰器可传入一个类
+    pass
+# 用装饰器装饰函数
+@decorator
+class C:
+    pass
+
+# 等价于
+# 定义装饰函数，可传入类
+def decorator(aClass):
+    pass
+# 定义类
+class C:
+    pass
+# 把类名重新绑定到可调用对象
+C = decorator(C)
+```
+
+元类是一种类似的基于类的高级工具，其用途往往与装饰器有所重合。会把一个类的创建导向到顶级type类的一个子类，元类通常定义type类的`__new__`或`__init__`方法，以实现对一个新的类对象的创建和初始化控制。
+
+#### 类陷阱
+
+##### 修改类属性的副作用
+
+从理论来讲，类是可改变的对象，就像内置字典和列表一样，可以给类属性赋值，并且在原处修改，同时意味着修改类或者实例对象，会影响对它的多处引用，因为所有从类产生的实例都共享这个类的命名空间，任何在类层次所做的修改都会反映在所有的实例中，除非实例拥有自己的被修改的类属性版本
+
+因为类、模块及实例都是属性命名空间内的对象，一般可通过赋值语句在运行时修改它的属性。
+
+- 但是当我们在class语句外动态修改类属性时，也会修改每个对象从该类继承而来的这个属性，最好修改实例而不是类属性，这样只影响一个对象
+
+##### 修改可变的类属性也可能产生副作用
+
+这个陷阱其实是前面陷阱的扩展，由于属性由所有实例共享，如果一个类属性引用一个可变对象，那么从任何实例来原处修改该对象都会立刻影响到所有实例
+
+```python
+class C:
+    # 类属性
+    shared = []
+    def __init__(self):
+        # 实例属性
+        self.perobj = []
+
+x = C()
+y = C()
+print(y.shared, y.perobj)
+# >>>[] []
+x.shared.append('spam')
+x.perobj.append('spam-s')
+print(x.shared, x.perobj)
+# ['spam'] ['spam-s']
+print(y.shared, y.perobj)
+# ['spam'] []
+```
+
+可变对象通过简单的变量来共享:
+
+- 全局变量由函数共享
+- 模块级别的对象由多个导入者共享
+- 可变的函数参数由调用者和被调用者共享
+
+##### 多重继承：顺序很重要
+
+使用多重继承，超类在class语句的顺序很重要，python总是会根据超类在首行的顺序，从左至右搜索超类
+
+```python
+class ListTree:
+    def __init__(slef):pass
+class Super:
+    def __init__(slef):pass
+class Sub(ListTree, Super):
+    pass
+```
+
+如果我们想同时使用两个超类的同名属性，我们得手动对类内的属性名赋值来覆盖继承
+
+```python
+class ListTree:
+    def __str__(self):pass
+    def other(self)：pass
+class Super:
+    def __str(self):pass
+    def other(self):pass
+class Sub(ListTree, Super):
+    other = Super.other
+    def __ini__(self):pass
+```
+
+这里对Sub类中的other做赋值运算，会建立Sub.other对Super.other对象的引用
+
+##### 避免过度包装
+
+##### 小结：
+
+- 修饰器通常用来给现存的函数增加函数每次被调用时都会运行的一层逻辑，可以用来记录函数的日志和调用次数，检查参数类型，可以用作静态方法
+- python3.0中所有的类都会自动成为新式类，新式类继承树中，以广度优先
+
+- 大师眼中的oop:
+
+  - 代码重用
+
+    支持继承，类允许通过定制来变编程
+
+  - 封装
+
+    在对象接口后包装其实现细节，隔离了代码的修改对用户的影响
+
+  - 结构
+
+    类提供了一个新的本地作用域，最小化了变量名冲突
+
+  - 维护性
+
+    类促进了代码的分解，减少了冗余
+
+  - 一致性
+
+    类和继承可实现通用的接口，代码就有了统一的外表和观感，减少了代码的调试、理解和维护
+
+  - 多态
+
+    oop的属性，多态让代码更灵活有了广泛的适用性
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-## 第七章_异常和工具
+## 七章_异常和工具
 
 ### 第三十二章_异常基础
 
