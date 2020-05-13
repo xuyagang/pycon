@@ -8,9 +8,10 @@ class C:
 x = C()
 y = C()
 print(y.shared, y.perobj)
-
+# >>>[] []
 x.shared.append('spam')
 x.perobj.append('spam-s')
 print(x.shared, x.perobj)
-
+# ['spam'] ['spam-s']
 print(y.shared, y.perobj)
+# ['spam'] []
