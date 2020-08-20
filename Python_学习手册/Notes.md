@@ -5582,7 +5582,7 @@ python 首次导入某个目录，会自动执行\_\_init\_\_.py文件中的程�
 
 ##### from * 的行为
 
-可以在\_\_init\_\_.py文件内时\_\_all\_\_列表来定义目录以from*语句形式导入时需要导出什么
+可以在\_\_init\_\_.py文件内写\_\_all\_\_列表来定义目录以from*语句形式导入时需要导出什么
 
 _\_all\_\_列表是指当包名称使用from*的时候，应该导入的子模块的名称清单，如果没有设定\_\_all\_\_, from * 语句不会自动加载嵌套于该目录内的子模块
 
@@ -8106,9 +8106,58 @@ class Sub(ListTree, Super):
 
 #### 捕获异常
 
-try块触发异常，会自动跳至处理器，
+try块触发异常，会自动跳至处理器except中
 
+#### 引发异常
 
+异常能由python或程序引发，能捕捉或忽略，要手动触发异常，直接执行raise语句
+
+如果没捕捉到异常，用户定义的异常就会向上传递，直到顶层默认的异常处理器
+
+assert
+
+- 也可以触发异常——是一个有条件的raise，主要是在开发过程中用于调试
+- assert断言是声明其布尔值必须为真的判定，如果发生异常就说明表达示为假，可以理解assert断言语句为raise-if-not
+
+```python
+assert expression [, arguments]
+
+# 等价于
+if not expression:
+  raise AssertionError()
+```
+
+#### 自定义异常
+
+```
+class Bad(Exception):
+    pass
+
+def doomed():
+    raise Bad
+
+try:
+    doomed()
+except Bad:
+    print('Got Bad')
+>>>Got Bad
+```
+
+#### 终止行为
+
+异常在try块中发生与否，finally都会执行
+
+try/except的组合用于捕捉异常并从中恢复，try/finally组合则很方便，无论try块内的代码是否发生异常，终止行为一定会发生
+
+#### 小结：
+
+- 任何未捕获的异常最终都流入默认的异常处理器
+
+- 如果不想要默认消息和退出，可以使用try/except语句，一旦捕获异常，异常终止，程序继续
+
+- raise和assert可以触发一个异常，就像该异常已经由python自身引发
+
+  
 
 
 

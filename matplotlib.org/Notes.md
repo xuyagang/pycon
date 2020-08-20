@@ -1,8 +1,8 @@
 [TOC]
 
-![inheritance-b12a398b08039fbb54e0dbb3eb616f39e9d9c069](D:\project\pycon\matplotlib.org\img\inheritance-b12a398b08039fbb54e0dbb3eb616f39e9d9c069.webp)
 
 
+![inheritance-b12a398b08039fbb54e0dbb3eb616f39e9d9c069](https://wechat-picture.oss-cn-beijing.aliyuncs.com/inheritance-b12a398b08039fbb54e0dbb3eb616f39e9d9c069.jpg)
 
 #### legend()
 
@@ -106,4 +106,8 @@ legend(handles, labels)
   | gridline       | Line2D instance |
   | label1         | Text instance   |
   | label2         | Text instance   |
+
+
+
+
 
